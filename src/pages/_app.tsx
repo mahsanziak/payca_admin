@@ -12,6 +12,7 @@ function MyApp({ Component, pageProps }: AppProps) {
 
   useEffect(() => {
     const handleAuthChange = async (event: string, session: any) => {
+      console.log('Auth change detected:', event, session);
       if (session) {
         const user = session.user;
         const restaurantId = user?.user_metadata?.restaurant_id;
