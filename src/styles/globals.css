@@ -1,0 +1,15 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+@import '@fortawesome/fontawesome-free/css/all.min.css';
+@import '../components/Sidebar.module.css';
+@import '../components/dashboard.module.css';
+@import '../components/Reports.module.css';
+@import '../components/MenuManagement.module.css';
+@import '../components/feedbacks.module.css';
+@import '../components/contactus.module.css';
+body {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 100;
+  background-color: #f9fafb;
+}

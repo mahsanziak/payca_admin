@@ -1,0 +1,56 @@
+.main-content {
+    margin-left: 250px; /* Same width as sidebar */
+    padding: 2rem;
+  }
+  
+  .dashboard-header,
+  .today-stats,
+  .recent-orders {
+    margin: 2rem;
+    text-align: center;
+  }
+  
+  .stats-row {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .stat-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    height: 100px;
+    text-align: center;
+  }
+  
+  .orders-table {
+    width: 80%;
+    border-collapse: collapse;
+    margin: 0 auto;
+  }
+  
+  .orders-table th,
+  .orders-table td {
+    padding: 10px;
+    border: 1px solid #e5e7eb;
+  }
+  
+  .no-data {
+    text-align: center;
+  }
+  
+  .animate-pulse {
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+  
