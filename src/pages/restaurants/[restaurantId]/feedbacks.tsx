@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import styles from '../../../components/Feedbacks.module.css'; // Adjust the import path if needed
+import styles from '../../../components/feedbacks.module.css'; // Adjust the import path if needed
 
 
 const FeedbacksPage = () => {
