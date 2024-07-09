@@ -12,11 +12,10 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const router = useRouter();
   const { restaurantId } = router.query;
-  const [restaurantName, setRestaurantName] = useState<string>('');
+  const [restaurantName, setRestaurantName] = useState<string>('Loading...');
   const [restaurantLocation, setRestaurantLocation] = useState<string>('');
 
   useEffect(() => {
-    console.log('Router query:', router.query);
     if (restaurantId) {
       const fetchRestaurantDetails = async () => {
         const { data, error } = await supabase
@@ -34,18 +33,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       };
 
       fetchRestaurantDetails();
+    } else {
+      // Reset to default or placeholder values if restaurantId is missing
+      setRestaurantName('Restaurant Name');
+      setRestaurantLocation('Location');
     }
-  }, [restaurantId, router.query]);
-
-  console.log('Current restaurantId:', restaurantId);
-
-  if (!restaurantId) {
-    return (
-      <div className="text-white">
-        Loading...
-      </div>
-    ); // Render a loading message if restaurantId is not defined
-  }
+  }, [restaurantId]);
 
   return (
     <div className="relative">
@@ -66,56 +59,56 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         </div>
         <ul className="space-y-4 p-4">
           <li>
-            <Link href={`/restaurants/${restaurantId}/dashboard`} legacyBehavior>
-              <a className="flex items-center p-2 hover:bg-gray-800 rounded-md">
+            <Link href={restaurantId ? `/restaurants/${restaurantId}/dashboard` : '#'} legacyBehavior>
+              <a className={`flex items-center p-2 ${restaurantId ? 'hover:bg-gray-800' : 'cursor-not-allowed'} rounded-md`}>
                 <i className="fas fa-tachometer-alt"></i>
                 {isOpen && <span className="ml-4">Dashboard</span>}
               </a>
             </Link>
           </li>
           <li>
-            <Link href={`/restaurants/${restaurantId}/reports`} legacyBehavior>
-              <a className="flex items-center p-2 hover:bg-gray-800 rounded-md">
+            <Link href={restaurantId ? `/restaurants/${restaurantId}/reports` : '#'} legacyBehavior>
+              <a className={`flex items-center p-2 ${restaurantId ? 'hover:bg-gray-800' : 'cursor-not-allowed'} rounded-md`}>
                 <i className="fas fa-chart-line"></i>
                 {isOpen && <span className="ml-4">Reports</span>}
               </a>
             </Link>
           </li>
           <li>
-            <Link href={`/restaurants/${restaurantId}/recommendations`} legacyBehavior>
-              <a className="flex items-center p-2 hover:bg-gray-800 rounded-md">
+            <Link href={restaurantId ? `/restaurants/${restaurantId}/recommendations` : '#'} legacyBehavior>
+              <a className={`flex items-center p-2 ${restaurantId ? 'hover:bg-gray-800' : 'cursor-not-allowed'} rounded-md`}>
                 <i className="fas fa-star"></i>
                 {isOpen && <span className="ml-4">Recommendations</span>}
               </a>
             </Link>
           </li>
           <li>
-            <Link href={`/restaurants/${restaurantId}/orders`} legacyBehavior>
-              <a className="flex items-center p-2 hover:bg-gray-800 rounded-md">
+            <Link href={restaurantId ? `/restaurants/${restaurantId}/orders` : '#'} legacyBehavior>
+              <a className={`flex items-center p-2 ${restaurantId ? 'hover:bg-gray-800' : 'cursor-not-allowed'} rounded-md`}>
                 <i className="fas fa-receipt"></i>
                 {isOpen && <span className="ml-4">Orders</span>}
               </a>
             </Link>
           </li>
           <li>
-            <Link href={`/restaurants/${restaurantId}/menu-management`} legacyBehavior>
-              <a className="flex items-center p-2 hover:bg-gray-800 rounded-md">
+            <Link href={restaurantId ? `/restaurants/${restaurantId}/menu-management` : '#'} legacyBehavior>
+              <a className={`flex items-center p-2 ${restaurantId ? 'hover:bg-gray-800' : 'cursor-not-allowed'} rounded-md`}>
                 <i className="fas fa-utensils"></i>
                 {isOpen && <span className="ml-4">Menu Management</span>}
               </a>
             </Link>
           </li>
           <li>
-            <Link href={`/restaurants/${restaurantId}/feedbacks`} legacyBehavior>
-              <a className="flex items-center p-2 hover:bg-gray-800 rounded-md">
+            <Link href={restaurantId ? `/restaurants/${restaurantId}/feedbacks` : '#'} legacyBehavior>
+              <a className={`flex items-center p-2 ${restaurantId ? 'hover:bg-gray-800' : 'cursor-not-allowed'} rounded-md`}>
                 <i className="fas fa-comments"></i>
                 {isOpen && <span className="ml-4">Feedbacks</span>}
               </a>
             </Link>
           </li>
           <li>
-            <Link href={`/restaurants/${restaurantId}/contact-us`} legacyBehavior>
-              <a className="flex items-center p-2 hover:bg-gray-800 rounded-md">
+            <Link href={restaurantId ? `/restaurants/${restaurantId}/contact-us` : '#'} legacyBehavior>
+              <a className={`flex items-center p-2 ${restaurantId ? 'hover:bg-gray-800' : 'cursor-not-allowed'} rounded-md`}>
                 <i className="fas fa-phone"></i>
                 {isOpen && <span className="ml-4">Contact Us</span>}
               </a>
