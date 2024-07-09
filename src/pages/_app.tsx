@@ -23,6 +23,7 @@ function MyApp({ Component, pageProps }: AppProps) {
           console.error('Restaurant ID not found in user_metadata');
         }
       } else {
+        console.log('No session found, redirecting to root');
         router.push('/');
       }
     };
@@ -33,6 +34,7 @@ function MyApp({ Component, pageProps }: AppProps) {
       const {
         data: { session },
       } = await supabase.auth.getSession();
+      console.log('Session check:', session);
       if (session) {
         const user = session.user;
         const restaurantId = user?.user_metadata?.restaurant_id;
@@ -43,6 +45,7 @@ function MyApp({ Component, pageProps }: AppProps) {
           console.error('Restaurant ID not found in user_metadata');
         }
       } else {
+        console.log('No active session found, redirecting to root');
         router.push('/');
       }
       setLoading(false);
