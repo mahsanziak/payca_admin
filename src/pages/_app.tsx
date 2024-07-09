@@ -17,19 +17,14 @@ function MyApp({ Component, pageProps }: AppProps) {
         const user = session.user;
         const restaurantId = user?.user_metadata?.restaurant_id;
         if (restaurantId) {
-          const targetRoute = `/restaurants/${restaurantId}/dashboard`;
-          if (router.pathname !== targetRoute) {
-            console.log(`Navigating to ${targetRoute}`);
-            router.push(targetRoute);
-          }
+          console.log(`Navigating to /restaurants/${restaurantId}/dashboard`);
+          // router.push(`/restaurants/${restaurantId}/dashboard`);
         } else {
           console.error('Restaurant ID not found in user_metadata');
         }
       } else {
-        if (router.pathname !== '/') {
-          console.log('No session found, redirecting to root');
-          router.push('/');
-        }
+        console.log('No session found, redirecting to root');
+        // router.push('/');
       }
     };
 
@@ -44,19 +39,14 @@ function MyApp({ Component, pageProps }: AppProps) {
         const user = session.user;
         const restaurantId = user?.user_metadata?.restaurant_id;
         if (restaurantId) {
-          const targetRoute = `/restaurants/${restaurantId}/dashboard`;
-          if (router.pathname !== targetRoute) {
-            console.log(`Session found. Navigating to ${targetRoute}`);
-            router.push(targetRoute);
-          }
+          console.log(`Session found. Navigating to /restaurants/${restaurantId}/dashboard`);
+          // router.push(`/restaurants/${restaurantId}/dashboard`);
         } else {
           console.error('Restaurant ID not found in user_metadata');
         }
       } else {
-        if (router.pathname !== '/') {
-          console.log('No active session found, redirecting to root');
-          router.push('/');
-        }
+        console.log('No active session found, redirecting to root');
+        // router.push('/');
       }
       setLoading(false);
     };
