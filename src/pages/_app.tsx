@@ -17,6 +17,7 @@ function MyApp({ Component, pageProps }: AppProps) {
         const user = session.user;
         const restaurantId = user?.user_metadata?.restaurant_id;
         if (restaurantId) {
+          console.log(`Navigating to /restaurants/${restaurantId}/dashboard`);
           router.push(`/restaurants/${restaurantId}/dashboard`);
         } else {
           console.error('Restaurant ID not found in user_metadata');
@@ -36,6 +37,7 @@ function MyApp({ Component, pageProps }: AppProps) {
         const user = session.user;
         const restaurantId = user?.user_metadata?.restaurant_id;
         if (restaurantId) {
+          console.log(`Session found. Navigating to /restaurants/${restaurantId}/dashboard`);
           router.push(`/restaurants/${restaurantId}/dashboard`);
         } else {
           console.error('Restaurant ID not found in user_metadata');
