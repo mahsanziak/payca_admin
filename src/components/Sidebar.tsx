@@ -55,7 +55,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         </div>
         <ul className="space-y-4 p-4">
           <li>
-            <Link href={`/restaurants/${restaurantId}/dashboard`} legacyBehavior>
+            <Link href={restaurantId ? `/restaurants/${restaurantId}/dashboard` : '#'}>
               <a className="flex items-center p-2 hover:bg-gray-800 rounded-md">
                 <i className="fas fa-tachometer-alt"></i>
                 {isOpen && <span className="ml-4">Dashboard</span>}
@@ -63,7 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
             </Link>
           </li>
           <li>
-            <Link href={`/restaurants/${restaurantId}/reports`} legacyBehavior>
+            <Link href={restaurantId ? `/restaurants/${restaurantId}/reports` : '#'}>
               <a className="flex items-center p-2 hover:bg-gray-800 rounded-md">
                 <i className="fas fa-chart-line"></i>
                 {isOpen && <span className="ml-4">Reports</span>}
@@ -71,7 +71,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
             </Link>
           </li>
           <li>
-            <Link href={`/restaurants/${restaurantId}/recommendations`} legacyBehavior>
+            <Link href={restaurantId ? `/restaurants/${restaurantId}/recommendations` : '#'}>
               <a className="flex items-center p-2 hover:bg-gray-800 rounded-md">
                 <i className="fas fa-star"></i>
                 {isOpen && <span className="ml-4">Recommendations</span>}
@@ -79,7 +79,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
             </Link>
           </li>
           <li>
-            <Link href={`/restaurants/${restaurantId}/orders`} legacyBehavior>
+            <Link href={restaurantId ? `/restaurants/${restaurantId}/orders` : '#'}>
               <a className="flex items-center p-2 hover:bg-gray-800 rounded-md">
                 <i className="fas fa-receipt"></i>
                 {isOpen && <span className="ml-4">Orders</span>}
@@ -87,7 +87,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
             </Link>
           </li>
           <li>
-            <Link href={`/restaurants/${restaurantId}/menu-management`} legacyBehavior>
+            <Link href={restaurantId ? `/restaurants/${restaurantId}/menu-management` : '#'}>
               <a className="flex items-center p-2 hover:bg-gray-800 rounded-md">
                 <i className="fas fa-utensils"></i>
                 {isOpen && <span className="ml-4">Menu Management</span>}
@@ -95,7 +95,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
             </Link>
           </li>
           <li>
-            <Link href={`/restaurants/${restaurantId}/feedbacks`} legacyBehavior>
+            <Link href={restaurantId ? `/restaurants/${restaurantId}/feedbacks` : '#'}>
               <a className="flex items-center p-2 hover:bg-gray-800 rounded-md">
                 <i className="fas fa-comments"></i>
                 {isOpen && <span className="ml-4">Feedbacks</span>}
@@ -103,7 +103,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
             </Link>
           </li>
           <li>
-            <Link href={`/restaurants/${restaurantId}/contact-us`} legacyBehavior>
+            <Link href={restaurantId ? `/restaurants/${restaurantId}/contact-us` : '#'}>
               <a className="flex items-center p-2 hover:bg-gray-800 rounded-md">
                 <i className="fas fa-phone"></i>
                 {isOpen && <span className="ml-4">Contact Us</span>}
