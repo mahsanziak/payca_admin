@@ -36,8 +36,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
     fetchRestaurantDetails();
   }, [restaurantId]);
 
+  console.log('Current restaurantId:', restaurantId);
+
   if (!restaurantId) {
-    return null; // Render nothing if restaurantId is not defined
+    return (
+      <div className="text-white">
+        Loading...
+      </div>
+    ); // Render a loading message if restaurantId is not defined
   }
 
   return (
