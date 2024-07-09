@@ -16,8 +16,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const [restaurantLocation, setRestaurantLocation] = useState<string>('');
 
   useEffect(() => {
-    const fetchRestaurantDetails = async () => {
-      if (restaurantId) {
+    console.log('Router query:', router.query);
+    if (restaurantId) {
+      const fetchRestaurantDetails = async () => {
         const { data, error } = await supabase
           .from('restaurants')
           .select('name, address')
@@ -30,11 +31,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         } else {
           console.error('Error fetching restaurant details:', error.message);
         }
-      }
-    };
+      };
 
-    fetchRestaurantDetails();
-  }, [restaurantId]);
+      fetchRestaurantDetails();
+    }
+  }, [restaurantId, router.query]);
 
   console.log('Current restaurantId:', restaurantId);
 
