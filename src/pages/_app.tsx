@@ -18,13 +18,13 @@ function MyApp({ Component, pageProps }: AppProps) {
         const restaurantId = user?.user_metadata?.restaurant_id;
         if (restaurantId) {
           console.log(`Navigating to /restaurants/${restaurantId}/dashboard`);
-          router.push(`/restaurants/${restaurantId}/dashboard`);
+          // router.push(`/restaurants/${restaurantId}/dashboard`);
         } else {
           console.error('Restaurant ID not found in user_metadata');
         }
       } else {
         console.log('No session found, redirecting to root');
-        router.push('/');
+        // router.push('/');
       }
     };
 
@@ -40,13 +40,13 @@ function MyApp({ Component, pageProps }: AppProps) {
         const restaurantId = user?.user_metadata?.restaurant_id;
         if (restaurantId) {
           console.log(`Session found. Navigating to /restaurants/${restaurantId}/dashboard`);
-          router.push(`/restaurants/${restaurantId}/dashboard`);
+          // router.push(`/restaurants/${restaurantId}/dashboard`);
         } else {
           console.error('Restaurant ID not found in user_metadata');
         }
       } else {
         console.log('No active session found, redirecting to root');
-        router.push('/');
+        // router.push('/');
       }
       setLoading(false);
     };
