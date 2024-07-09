@@ -16,8 +16,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const [restaurantLocation, setRestaurantLocation] = useState<string>('');
 
   useEffect(() => {
-    if (restaurantId) {
-      const fetchRestaurantDetails = async () => {
+    const fetchRestaurantDetails = async () => {
+      if (restaurantId) {
         const { data, error } = await supabase
           .from('restaurants')
           .select('name, address')
@@ -30,14 +30,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
         } else {
           console.error('Error fetching restaurant details:', error.message);
         }
-      };
+      } else {
+        setRestaurantName('Restaurant Name');
+        setRestaurantLocation('Location');
+      }
+    };
 
-      fetchRestaurantDetails();
-    } else {
-      // Reset to default or placeholder values if restaurantId is missing
-      setRestaurantName('Restaurant Name');
-      setRestaurantLocation('Location');
-    }
+    fetchRestaurantDetails();
   }, [restaurantId]);
 
   const defaultRoute = '/'; // Define a default route when restaurantId is not available
