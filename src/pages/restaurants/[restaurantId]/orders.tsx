@@ -1,5 +1,3 @@
-// orders.tsx
-
 import { useRouter } from 'next/router';
 import styles from '../../../components/Orders.module.css'; // Adjust the path according to your directory structure
 import { useEffect, useState } from 'react';
@@ -36,13 +34,18 @@ const OrdersPage = () => {
   const [editMode, setEditMode] = useState(false);
 
   useEffect(() => {
-    // Fetch orders based on restaurantId
     const fetchOrders = async () => {
       if (restaurantId) {
-        // Replace with actual fetch call
-        const response = await fetch(`/api/orders?restaurantId=${restaurantId}`);
-        const data: Order[] = await response.json();
-        setOrders(data);
+        try {
+          const response = await fetch(`/api/orders?restaurantId=${restaurantId}`);
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const data: Order[] = await response.json();
+          setOrders(data);
+        } catch (error) {
+          console.error('Error fetching orders:', error);
+        }
       }
     };
 
