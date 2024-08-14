@@ -3,6 +3,7 @@ import styles from '../../../components/Orders.module.css'; // Adjust the path a
 import { useEffect, useState } from 'react';
 import { supabase } from '../../../utils/supabaseClient'; // Import your Supabase client
 import Draggable from 'react-draggable';
+import _ from 'lodash';
 
 type Order = {
   id: string;
@@ -14,6 +15,7 @@ type Order = {
 
 type Table = {
   id: string;
+  table_number: number;
   seats: number;
   shape: 'square' | 'rectangle' | 'circle';
   position: { x: number; y: number };
@@ -27,24 +29,37 @@ const OrdersPage = () => {
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [showPastOrders, setShowPastOrders] = useState(false);
-  const [tables, setTables] = useState<Table[]>(() => {
-    const savedTables = localStorage.getItem('tables');
-    return savedTables ? JSON.parse(savedTables) : [
-      { id: '200', seats: 4, shape: 'square', position: { x: 100, y: 100 }, occupied: false, occupiedSince: null },
-      { id: '201', seats: 4, shape: 'square', position: { x: 250, y: 100 }, occupied: false, occupiedSince: null },
-      { id: '202', seats: 4, shape: 'rectangle', position: { x: 400, y: 100 }, occupied: false, occupiedSince: null },
-      { id: '203', seats: 4, shape: 'rectangle', position: { x: 550, y: 100 }, occupied: false, occupiedSince: null },
-      { id: '204', seats: 4, shape: 'circle', position: { x: 700, y: 100 }, occupied: false, occupiedSince: null },
-      { id: '205', seats: 4, shape: 'square', position: { x: 100, y: 250 }, occupied: false, occupiedSince: null },
-      { id: '206', seats: 4, shape: 'square', position: { x: 250, y: 250 }, occupied: false, occupiedSince: null },
-      { id: '207', seats: 4, shape: 'rectangle', position: { x: 400, y: 250 }, occupied: false, occupiedSince: null },
-      { id: '208', seats: 4, shape: 'rectangle', position: { x: 550, y: 250 }, occupied: false, occupiedSince: null },
-      { id: '209', seats: 4, shape: 'circle', position: { x: 700, y: 250 }, occupied: false, occupiedSince: null },
-    ];
-  });
-
+  const [tables, setTables] = useState<Table[]>([]);
   const [editMode, setEditMode] = useState(false);
   const [showShapeModal, setShowShapeModal] = useState(false);
+
+  useEffect(() => {
+    const fetchTables = async () => {
+      if (restaurantId) {
+        const { data, error } = await supabase
+          .from('tables')
+          .select('*')
+          .eq('restaurant_id', restaurantId);
+
+        if (error) {
+          console.error('Error fetching tables:', error);
+        } else {
+          const formattedTables = data.map((table) => ({
+            id: table.id,
+            table_number: table.table_number,
+            seats: table.seats,
+            shape: table.shape,
+            position: { x: table.position_x, y: table.position_y },
+            occupied: table.occupied,
+            occupiedSince: table.occupied_since ? new Date(table.occupied_since) : null,
+          }));
+          setTables(formattedTables);
+        }
+      }
+    };
+
+    fetchTables();
+  }, [restaurantId]);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -66,10 +81,6 @@ const OrdersPage = () => {
   }, [restaurantId]);
 
   useEffect(() => {
-    localStorage.setItem('tables', JSON.stringify(tables));
-  }, [tables]);
-
-  useEffect(() => {
     if (tables.some(table => table.occupied)) {
       const interval = setInterval(() => {
         setTables([...tables]); // Trigger re-render to update time
@@ -79,41 +90,96 @@ const OrdersPage = () => {
     }
   }, [tables]);
 
-  const handleAddTable = (shape: 'square' | 'rectangle' | 'circle') => {
-    const newTable: Table = {
-      id: (tables.length + 200).toString(),
+  const handleAddTable = async (shape: 'square' | 'rectangle' | 'circle') => {
+    const newTable = {
+      restaurant_id: restaurantId,
+      table_number: tables.length + 1, // Generate a new table number based on the existing number of tables
       seats: 4,
       shape,
-      position: { x: 0, y: 0 },
+      position_x: 0,
+      position_y: 0,
       occupied: false,
-      occupiedSince: null,
+      occupied_since: null,
     };
-    setTables([...tables, newTable]);
+
+    const { data, error } = await supabase
+      .from('tables')
+      .insert(newTable)
+      .select();
+
+    if (error) {
+      console.error('Error adding table:', error);
+    } else {
+      const formattedTable = {
+        id: data[0].id,
+        table_number: data[0].table_number,
+        seats: data[0].seats,
+        shape: data[0].shape,
+        position: { x: data[0].position_x, y: data[0].position_y },
+        occupied: data[0].occupied,
+        occupiedSince: data[0].occupied_since ? new Date(data[0].occupied_since) : null,
+      };
+      setTables([...tables, formattedTable]);
+    }
+
     setShowShapeModal(false); // Hide the shape selection modal
   };
 
-  const handleSeatsChange = (tableId: string, seats: number) => {
+  const handleSeatsChange = async (tableId: string, seats: number) => {
     const updatedTables = tables.map(table => 
       table.id === tableId ? { ...table, seats } : table
     );
     setTables(updatedTables);
+
+    const { error } = await supabase
+      .from('tables')
+      .update({ seats })
+      .eq('id', tableId);
+
+    if (error) {
+      console.error('Error updating seats:', error);
+    }
   };
 
-  const handleTableNumberChange = (tableId: string, newId: string) => {
+  const handleTableNumberChange = async (tableId: string, newTableNumber: number) => {
     const updatedTables = tables.map(table => 
-      table.id === tableId ? { ...table, id: newId } : table
+      table.id === tableId ? { ...table, table_number: newTableNumber } : table
     );
     setTables(updatedTables);
+
+    const { error } = await supabase
+      .from('tables')
+      .update({ table_number: newTableNumber })
+      .eq('id', tableId);
+
+    if (error) {
+      console.error('Error updating table number:', error);
+    }
   };
 
-  const handleDrag = (e, position, tableId) => {
+  const handleDrag = _.throttle((e, position, tableId) => {
     const { x, y } = position;
-    setTables(tables.map(table => 
-      table.id === tableId ? { ...table, position: { x, y } } : table
-    ));
+    setTables((prevTables) =>
+      prevTables.map((table) =>
+        table.id === tableId ? { ...table, position: { x, y } } : table
+      )
+    );
+  }, 100);
+
+  const handleDragStop = async (e, position, tableId) => {
+    const { x, y } = position;
+
+    const { error } = await supabase
+      .from('tables')
+      .update({ position_x: x, position_y: y })
+      .eq('id', tableId);
+
+    if (error) {
+      console.error('Error updating table position:', error);
+    }
   };
 
-  const handleTableClick = (tableId: string) => {
+  const handleTableClick = async (tableId: string) => {
     if (!editMode) {
       const updatedTables = tables.map(table =>
         table.id === tableId 
@@ -125,11 +191,32 @@ const OrdersPage = () => {
           : table
       );
       setTables(updatedTables);
+
+      const { error } = await supabase
+        .from('tables')
+        .update({ 
+          occupied: !tables.find(table => table.id === tableId)?.occupied,
+          occupied_since: !tables.find(table => table.id === tableId)?.occupied ? new Date().toISOString() : null,
+        })
+        .eq('id', tableId);
+
+      if (error) {
+        console.error('Error updating table occupation status:', error);
+      }
     }
   };
 
-  const handleDeleteTable = (tableId: string) => {
-    setTables(tables.filter(table => table.id !== tableId));
+  const handleDeleteTable = async (tableId: string) => {
+    const { error } = await supabase
+      .from('tables')
+      .delete()
+      .eq('id', tableId);
+
+    if (error) {
+      console.error('Error deleting table:', error);
+    } else {
+      setTables(tables.filter(table => table.id !== tableId));
+    }
   };
 
   const formatTimeElapsed = (startTime: Date | null) => {
@@ -217,8 +304,10 @@ const OrdersPage = () => {
               key={table.id}
               bounds="parent"
               position={{ x: table.position.x, y: table.position.y }}
-              onStop={(e, position) => handleDrag(e, position, table.id)}
+              onStop={(e, position) => handleDragStop(e, position, table.id)}
+              onDrag={(e, position) => handleDrag(e, position, table.id)}
               disabled={!editMode}
+              scale={1} // Default scaling, adjust if your layout is scaled
             >
               <div
                 className={`${styles.tableCell} ${styles[table.shape]} ${table.occupied ? styles.occupied : styles.empty}`}
@@ -228,9 +317,9 @@ const OrdersPage = () => {
                 {editMode ? (
                   <>
                     <input
-                      type="text"
-                      value={table.id}
-                      onChange={(e) => handleTableNumberChange(table.id, e.target.value)}
+                      type="number"
+                      value={table.table_number}
+                      onChange={(e) => handleTableNumberChange(table.id, Number(e.target.value))}
                       className={styles.tableNumberInput}
                     />
                     <select
@@ -249,7 +338,7 @@ const OrdersPage = () => {
                   </>
                 ) : (
                   <>
-                    Table {table.id} <br />
+                    Table {table.table_number} <br />
                     {table.seats} Seats
                   </>
                 )}
