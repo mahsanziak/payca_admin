@@ -6,7 +6,6 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
-import QRCode from 'qrcode.react';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import styles from '../../../components/Menus.module.css'; // Adjust the import path if needed
 
@@ -18,9 +17,8 @@ const MenusPage = () => {
   const [selectedMenu, setSelectedMenu] = useState<any | null>(null);
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [newItem, setNewItem] = useState({ name: '', description: '', price: '', category_id: '', image_url: '' });
   const [categories, setCategories] = useState<any[]>([]);
-  const [qrColor, setQrColor] = useState('#000000');
-  const [qrValue, setQrValue] = useState('');
 
   useEffect(() => {
     const fetchMenus = async () => {
@@ -50,7 +48,7 @@ const MenusPage = () => {
     if (error) {
       console.error('Error fetching menu items:', error.message);
     } else {
-      setMenuItems(data);
+      setMenuItems(data || []);
     }
   };
 
@@ -63,7 +61,7 @@ const MenusPage = () => {
     if (error) {
       console.error('Error fetching categories:', error.message);
     } else {
-      setCategories(data);
+      setCategories(data || []);
     }
   };
 
@@ -71,22 +69,29 @@ const MenusPage = () => {
     setSelectedMenu(menu);
     fetchMenuItems(menu.id);
     fetchCategories(menu.id);
-    generateNewQrCode(); // Generate new QR code when menu is selected
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, itemId: string) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>, itemId: string | null = null) => {
     const { name, value } = e.target;
-    setMenuItems(menuItems.map(item => (item.id === itemId ? { ...item, [name]: value } : item)));
+    if (itemId) {
+      setMenuItems(menuItems.map(item => (item.id === itemId ? { ...item, [name]: value } : item)));
+    } else {
+      setNewItem({ ...newItem, [name]: value });
+    }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>, itemId: string) => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>, itemId: string | null = null) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setMenuItems(menuItems.map(item => 
-          item.id === itemId ? { ...item, image_url: reader.result } : item
-        ));
+        if (itemId) {
+          setMenuItems(menuItems.map(item => 
+            item.id === itemId ? { ...item, image_url: reader.result } : item
+          ));
+        } else {
+          setNewItem({ ...newItem, image_url: reader.result });
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -103,6 +108,25 @@ const MenusPage = () => {
       console.error('Error updating menu item:', error.message);
     } else {
       setEditingItemId(null);
+    }
+  };
+
+  const addItem = async () => {
+    const { name, description, price, category_id, image_url } = newItem;
+    if (name && description && price && category_id) {
+      const { data, error } = await supabase
+        .from('menu_items')
+        .insert([{ name, description, price: parseFloat(price), category_id, image_url, menu_id: selectedMenu.id }])
+        .single();
+
+      if (error) {
+        console.error('Error adding menu item:', error.message);
+      } else {
+        setMenuItems([...menuItems, data]);
+        setNewItem({ name: '', description: '', price: '', category_id: '', image_url: '' });
+      }
+    } else {
+      alert('Please fill out all fields');
     }
   };
 
@@ -127,71 +151,31 @@ const MenusPage = () => {
     }
   };
 
-  const generateNewQrCode = () => {
-    const randomString = Math.random().toString(36).substring(2, 10);
-    setQrValue(`https://playlystify.com?code=${randomString}`);
-  };
-
-  const handleQrColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setQrColor(e.target.value);
-  };
-
-  const printQRCode = () => {
-    generateNewQrCode(); // Ensure a new QR code is generated each time
-
-    const qrCodeElement = document.getElementById('qrcode')?.firstChild as HTMLCanvasElement;
-    if (qrCodeElement) {
-      const qrCodeImage = qrCodeElement.toDataURL('image/png');
-      const qrText = "<p style='font-size: 20px; text-align: center; margin-top: 20px;'>Scan Here! 😊</p>";
-      const printWindow = window.open('', '_blank');
-
-      if (printWindow && qrCodeImage) {
-        printWindow.document.write('<html><head><title>Print QR Code</title></head><body>');
-        printWindow.document.write('<div style="text-align:center; padding: 50px;">');
-        printWindow.document.write('<img src="' + qrCodeImage + '" style="transform: scale(2); transform-origin: top center;">');
-        printWindow.document.write(qrText);
-        printWindow.document.write('</div>');
-        printWindow.document.close();
-
-        printWindow.onload = function () {
-          setTimeout(function () {
-            printWindow.print();
-            printWindow.close();
-          }, 500);
-        };
-      }
-    }
-  };
-
-  useEffect(() => {
-    if (selectedMenu) {
-      generateNewQrCode(); // Generate new QR code when menu is selected
-    }
-  }, [selectedMenu]);
-
   const onDragEnd = async (result) => {
     const { destination, source, draggableId } = result;
 
     if (!destination) return;
 
     const movedItem = menuItems.find(item => item.id === draggableId);
-    const updatedItem = { ...movedItem, category_id: destination.droppableId };
+    if (movedItem && destination.droppableId) {
+      const updatedItem = { ...movedItem, category_id: destination.droppableId };
 
-    // Update in state
-    const updatedMenuItems = menuItems.map(item => 
-      item.id === draggableId ? updatedItem : item
-    );
+      // Update in state
+      const updatedMenuItems = menuItems.map(item => 
+        item.id === draggableId ? updatedItem : item
+      );
 
-    setMenuItems(updatedMenuItems);
+      setMenuItems(updatedMenuItems);
 
-    // Update in database
-    const { error } = await supabase
-      .from('menu_items')
-      .update({ category_id: destination.droppableId })
-      .eq('id', draggableId);
+      // Update in database
+      const { error } = await supabase
+        .from('menu_items')
+        .update({ category_id: destination.droppableId })
+        .eq('id', draggableId);
 
-    if (error) {
-      console.error('Error updating menu item category:', error.message);
+      if (error) {
+        console.error('Error updating menu item category:', error.message);
+      }
     }
   };
 
@@ -217,6 +201,56 @@ const MenusPage = () => {
 
       {selectedMenu && (
         <>
+          <div className={styles.addItemForm}>
+            <h2 className={styles.addItemTitle}>Add New Menu Item</h2>
+            <div className={styles.formRow}>
+              <input
+                type="text"
+                name="name"
+                placeholder="Item Name"
+                className={styles.inputField}
+                value={newItem.name}
+                onChange={(e) => handleInputChange(e)}
+              />
+              <textarea
+                name="description"
+                placeholder="Description"
+                className={styles.inputField}
+                value={newItem.description}
+                onChange={(e) => handleInputChange(e)}
+              />
+              <input
+                type="number"
+                name="price"
+                placeholder="Price"
+                className={styles.inputField}
+                value={newItem.price}
+                onChange={(e) => handleInputChange(e)}
+              />
+              <select
+                name="category_id"
+                className={styles.inputField}
+                value={newItem.category_id}
+                onChange={(e) => handleInputChange(e)}
+              >
+                <option value="">Select Category</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleImageChange(e)}
+              />
+              <button onClick={addItem} className={styles.addButton}>
+                Add Item
+              </button>
+            </div>
+          </div>
+
           <DragDropContext onDragEnd={onDragEnd}>
             <table className={styles.table}>
               <thead>
@@ -241,7 +275,7 @@ const MenusPage = () => {
                         </td>
                       </tr>
                       {menuItems
-                        .filter(item => item.category_id === category.id)
+                        .filter(item => item && item.category_id === category.id)
                         .map((item, index) => (
                           <Draggable key={item.id} draggableId={item.id} index={index}>
                             {(provided) => (
@@ -335,25 +369,6 @@ const MenusPage = () => {
               ))}
             </table>
           </DragDropContext>
-
-          <div className={styles.qrCodeContainer}>
-            <h2 className={styles.qrCodeTitle}>QR Code</h2>
-            <div className={styles.qrCode} id="qrcode">
-              <QRCode value={`https://playlystify.com?code=${qrValue}`} fgColor={qrColor} />
-            </div>
-            <input
-              type="color"
-              value={qrColor}
-              onChange={handleQrColorChange}
-              className={styles.colorPicker}
-            />
-            <button
-              onClick={printQRCode}
-              className={styles.printButton}
-            >
-              Print QR Code
-            </button>
-          </div>
         </>
       )}
     </div>

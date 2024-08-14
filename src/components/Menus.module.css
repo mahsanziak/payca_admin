@@ -1,7 +1,5 @@
 .inventoryManagement {
   padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
 }
 
 .settingsTitle {
@@ -11,127 +9,101 @@
 }
 
 .itemForm {
-  display: flex;
-  gap: 1rem;
   margin-bottom: 2rem;
-  justify-content: center;
-  flex-wrap: wrap;
 }
 
 .inputField {
   padding: 0.5rem;
-  border-radius: 5px;
   border: 1px solid #ccc;
-  flex: 1;
-  min-width: 200px;
+  border-radius: 4px;
+  margin-right: 1rem;
   margin-bottom: 1rem;
+  flex: 1;
+  min-width: 150px;
+}
+
+.addItemForm {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  width: 100%;
+  max-width: 1000px; /* Increased max-width for more horizontal space */
+}
+
+.addItemTitle {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  width: 100%;
+  text-align: left;
+}
+
+.formRow {
+  display: flex;
+  flex-wrap: wrap; /* Allows wrapping if the screen is too narrow */
+  gap: 1rem; /* Space between elements */
+  width: 100%;
 }
 
 .addButton {
-  padding: 1rem 2rem;
-  background-color: #007BFF;
+  padding: 0.5rem 1rem;
+  background-color: #007bff;
   color: white;
   border: none;
-  border-radius: 5px;
+  border-radius: 4px;
   cursor: pointer;
-  text-align: center;
-  text-decoration: none;
+  align-self: stretch;
 }
 
 .addButton:hover {
   background-color: #0056b3;
 }
 
-.scrollableTable {
-  overflow-x: auto;
+.fileInputWrapper input[type="file"] {
+  margin-bottom: 1rem;
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
+  margin-bottom: 2rem;
 }
 
-.table th, .table td {
+.table th,
+.table td {
   padding: 1rem;
-  border: 1px solid #ddd;
-}
-
-.table th {
-  background-color: #f8f8f8;
   text-align: left;
+  border-bottom: 1px solid #ddd;
 }
 
-.table td input, .table td textarea {
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  box-sizing: border-box;
-}
-
-.hideLabel {
-  display: flex;
-  align-items: center;
-}
-
-.hideLabel span {
-  margin-left: 5px;
-}
-
-.qrCodeContainer {
-  text-align: center;
-  margin-top: 2rem;
-}
-
-.qrCodeTitle {
-  font-size: 2rem;
-  margin-bottom: 1rem;
-}
-
-.qrCode {
-  display: inline-block;
-  padding: 1rem;
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  margin-bottom: 1rem;
-}
-
-.colorPicker {
-  margin-top: 1rem;
-  padding: 0.5rem;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-  cursor: pointer;
-}
-
-.printButton {
-  padding: 1rem 2rem;
-  background-color: #007BFF;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  display: block;
-  margin: 0 auto;
-}
-
-.printButton:hover {
-  background-color: #0056b3;
-}
-
-/* Category Row Styling */
 .categoryRow {
-  background-color: #e0e0e0;
+  background-color: #f1f1f1;
   font-weight: bold;
-  text-align: left;
-  padding: 1rem;
-  border: 1px solid #ddd;
-  border-top: 2px solid #ccc;
+  text-transform: uppercase;
 }
+
 .imagePreview {
   width: 50px;
   height: 50px;
   object-fit: cover;
-  border-radius: 5px;
+  border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+  .inputField {
+    margin-bottom: 1rem;
+    width: 100%;
+  }
+
+  .formRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .addButton {
+    width: 100%;
+  }
 }
