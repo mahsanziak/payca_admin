@@ -31,27 +31,12 @@ const MenusPage = () => {
           console.error('Error fetching menus:', error.message);
         } else {
           setMenus(data);
-        }
-      }
-    };
-
-    const fetchCategories = async () => {
-      if (restaurantId) {
-        const { data, error } = await supabase
-          .from('menu_categories')
-          .select('*')
-          .eq('menu_id', restaurantId);
-
-        if (error) {
-          console.error('Error fetching categories:', error.message);
-        } else {
-          setCategories(data);
+          console.log("Fetched menus:", data); // Debugging statement
         }
       }
     };
 
     fetchMenus();
-    fetchCategories();
   }, [restaurantId]);
 
   const fetchMenuItems = async (menuId: string) => {
@@ -64,12 +49,29 @@ const MenusPage = () => {
       console.error('Error fetching menu items:', error.message);
     } else {
       setMenuItems(data);
+      console.log("Fetched menu items:", data); // Debugging statement
+    }
+  };
+
+  const fetchCategories = async (menuId: string) => {
+    console.log("Fetching categories for menu ID:", menuId); // Debugging statement
+    const { data, error } = await supabase
+      .from('menu_categories')
+      .select('*')
+      .eq('menu_id', menuId);
+
+    if (error) {
+      console.error('Error fetching categories:', error.message);
+    } else {
+      setCategories(data);
+      console.log("Fetched categories:", data); // Debugging statement
     }
   };
 
   const handleMenuClick = (menu: any) => {
     setSelectedMenu(menu);
     fetchMenuItems(menu.id);
+    fetchCategories(menu.id);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>, setState: any) => {
@@ -205,36 +207,81 @@ const MenusPage = () => {
     generateNewQrCode(); // Generate an initial QR code when the component mounts
   }, [selectedMenu]);
 
+  useEffect(() => {
+    console.log("Categories state updated:", categories); // Debugging statement
+  }, [categories]);
+
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-center mb-8">
         <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-lg">
           <h2 className="text-2xl font-semibold text-center mb-6">My Menus</h2>
-          <select className="w-full mb-4 p-2 border rounded">
-            <option>Breakfast Menu</option>
-            {/* Add more options here */}
+          <select
+            className="w-full mb-4 p-2 border rounded"
+            onChange={(e) => {
+              const menu = menus.find((m) => m.id === e.target.value);
+              handleMenuClick(menu);
+            }}
+          >
+            <option value="">Select a Menu</option>
+            {menus.map((menu) => (
+              <option key={menu.id} value={menu.id}>
+                {menu.name}
+              </option>
+            ))}
           </select>
-          <input
-            type="text"
-            placeholder="Item Name"
-            className="w-full mb-4 p-2 border rounded"
-          />
-          <input
-            type="text"
-            placeholder="Price"
-            className="w-full mb-4 p-2 border rounded"
-          />
-          <textarea
-            placeholder="Description"
-            className="w-full mb-4 p-2 border rounded"
-          />
-          <button className="bg-blue-500 text-white p-2 w-full rounded">Add Item</button>
+          {selectedMenu && (
+            <>
+              <input
+                type="text"
+                placeholder="Item Name"
+                className="w-full mb-4 p-2 border rounded"
+                name="name"
+                value={newMenuItem.name}
+                onChange={(e) => handleInputChange(e, setNewMenuItem)}
+              />
+              <input
+                type="number"
+                placeholder="Price"
+                className="w-full mb-4 p-2 border rounded"
+                name="price"
+                value={newMenuItem.price}
+                onChange={(e) => handleInputChange(e, setNewMenuItem)}
+              />
+              <textarea
+                placeholder="Description"
+                className="w-full mb-4 p-2 border rounded"
+                name="description"
+                value={newMenuItem.description}
+                onChange={(e) => handleInputChange(e, setNewMenuItem)}
+              />
+              <select
+                className="w-full mb-4 p-2 border rounded"
+                name="category_id"
+                value={newMenuItem.category_id}
+                onChange={(e) => handleInputChange(e, setNewMenuItem)}
+              >
+                <option value="">Select a Category</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                className="bg-blue-500 text-white p-2 w-full rounded"
+                onClick={addMenuItem}
+              >
+                Add Item
+              </button>
+            </>
+          )}
         </div>
       </div>
       <div className="flex justify-center">
         <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-lg">
           <h2 className="text-2xl font-semibold text-center mb-6">QR Code</h2>
-          <div className="flex justify-center mb-4">
+          <div className="flex justify-center mb-4" id="qrcode">
             <QRCode value={`https://playlystify.com?code=${qrValue}`} fgColor={qrColor} />
           </div>
           <div className="mb-4">

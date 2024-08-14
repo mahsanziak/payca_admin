@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router';
 import styles from '../../../components/Orders.module.css'; // Adjust the path according to your directory structure
 import { useEffect, useState } from 'react';
+import { supabase } from '../../../utils/supabaseClient'; // Import your Supabase client
 
 type Order = {
   id: string;
@@ -62,14 +63,35 @@ const OrdersPage = () => {
     setTableNumbers(updatedTableNumbers);
   };
 
-  const assignTableNumber = () => {
+  const assignTableNumber = async () => {
     const [rowIndex, cellIndex] = popupPosition;
-    handleTableNumberChange(rowIndex, cellIndex, inputValue);
+    const tableNumber = inputValue;
+
+    // Update the local state
+    handleTableNumberChange(rowIndex, cellIndex, tableNumber);
     const updatedTableStatus = [...tableStatus];
     updatedTableStatus[rowIndex][cellIndex] = 'green';
     setTableStatus(updatedTableStatus);
     setShowPopup(false);
     setInputValue('');
+
+    // Insert or update the table in the Supabase database
+    try {
+      const { data, error } = await supabase.from('tables').insert([
+        {
+          table_number: tableNumber,
+          restaurant_id: restaurantId,
+        },
+      ]);
+
+      if (error) {
+        console.error('Error inserting table:', error.message);
+      } else {
+        console.log('Table inserted:', data);
+      }
+    } catch (error) {
+      console.error('Error inserting table:', error);
+    }
   };
 
   const handleCellClick = (rowIndex: number, cellIndex: number) => {
