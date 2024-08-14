@@ -1,137 +1,137 @@
-.container {
-  padding: 20px;
+.inventoryManagement {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-.title {
-  font-size: 2em;
-  margin-bottom: 20px;
+.settingsTitle {
+  font-size: 2.5rem;
+  text-align: center;
+  margin-bottom: 2rem;
 }
 
-.gridContainer {
+.itemForm {
   display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  justify-content: center;
   flex-wrap: wrap;
-  gap: 20px;
 }
 
-.menuItem {
-  padding: 20px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  cursor: pointer;
-  flex: 1 1 30%;
-  position: relative;
+.inputField {
+  padding: 0.5rem;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  flex: 1;
+  min-width: 200px;
+  margin-bottom: 1rem;
 }
 
-.menuItem:hover {
-  background-color: #f0f0f0;
-}
-
-.menuTitle {
-  font-size: 1.5em;
-  margin-bottom: 10px;
-}
-
-.description {
-  font-size: 1em;
-  color: #555;
-}
-
-.addMenu,
-.addMenuItem {
-  padding: 20px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  flex: 1 1 100%;
-}
-
-.addMenu input,
-.addMenuItem input,
-.addMenu textarea,
-.addMenuItem textarea {
-  display: block;
-  width: 100%;
-  margin-bottom: 10px;
-  padding: 8px;
-}
-
-.addMenu button,
-.addMenuItem button {
-  padding: 10px 20px;
-  background-color: #001e3f;
+.addButton {
+  padding: 1rem 2rem;
+  background-color: #007BFF;
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 5px;
   cursor: pointer;
+  text-align: center;
+  text-decoration: none;
 }
 
-.addMenu button:hover,
-.addMenuItem button:hover {
-  background-color: #001e3f;
-}
-
-.menuItemsContainer {
-  margin-top: 20px;
-}
-
-.menuItemsContainer ul {
-  list-style: none;
-  padding: 0;
-}
-
-.menuItemsContainer li {
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
-  position: relative;
-}
-
-.menuItemsContainer li h4 {
-  margin: 0;
-  font-size: 1.2em;
-}
-
-.deleteBtn,
-.editBtn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-
-.editBtn {
-  right: 40px;
-}
-
-.editMenuContainer,
-.editMenuItemContainer {
-  padding: 20px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  margin-top: 20px;
-}
-
-.editMenuContainer input,
-.editMenuItemContainer input,
-.editMenuContainer textarea,
-.editMenuItemContainer textarea {
-  display: block;
-  width: 100%;
-  margin-bottom: 10px;
-  padding: 8px;
-}
-
-.editMenuContainer button,
-.editMenuItemContainer button {
-  padding: 10px 20px;
-  background-color: #001e3f;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.editMenuContainer button:hover,
-.editMenuItemContainer button:hover {
+.addButton:hover {
   background-color: #0056b3;
+}
+
+.scrollableTable {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th, .table td {
+  padding: 1rem;
+  border: 1px solid #ddd;
+}
+
+.table th {
+  background-color: #f8f8f8;
+  text-align: left;
+}
+
+.table td input, .table td textarea {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.hideLabel {
+  display: flex;
+  align-items: center;
+}
+
+.hideLabel span {
+  margin-left: 5px;
+}
+
+.qrCodeContainer {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.qrCodeTitle {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.qrCode {
+  display: inline-block;
+  padding: 1rem;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  margin-bottom: 1rem;
+}
+
+.colorPicker {
+  margin-top: 1rem;
+  padding: 0.5rem;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+
+.printButton {
+  padding: 1rem 2rem;
+  background-color: #007BFF;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  display: block;
+  margin: 0 auto;
+}
+
+.printButton:hover {
+  background-color: #0056b3;
+}
+
+/* Category Row Styling */
+.categoryRow {
+  background-color: #e0e0e0;
+  font-weight: bold;
+  text-align: left;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-top: 2px solid #ccc;
+}
+.imagePreview {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 5px;
 }
