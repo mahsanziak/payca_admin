@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../../../utils/supabaseClient';
 import { FaTrash, FaEdit } from 'react-icons/fa';
-import QRCode from 'qrcode.react'; // Import the QRCode component
+import QRCode from 'qrcode.react';
 
 const MenusPage = () => {
   const router = useRouter();
@@ -16,8 +16,8 @@ const MenusPage = () => {
   const [newMenu, setNewMenu] = useState({ name: '', description: '', image_url: '' });
   const [newMenuItem, setNewMenuItem] = useState({ name: '', description: '', price: 0, image_url: '', category_id: '' });
   const [categories, setCategories] = useState<any[]>([]);
-  const [qrColor, setQrColor] = useState('#000000'); // State for QR code color
-  const [qrValue, setQrValue] = useState(''); // State for QR code value
+  const [qrColor, setQrColor] = useState('#000000');
+  const [qrValue, setQrValue] = useState('');
 
   useEffect(() => {
     const fetchMenus = async () => {
@@ -31,7 +31,6 @@ const MenusPage = () => {
           console.error('Error fetching menus:', error.message);
         } else {
           setMenus(data);
-          console.log("Fetched menus:", data); // Debugging statement
         }
       }
     };
@@ -49,12 +48,10 @@ const MenusPage = () => {
       console.error('Error fetching menu items:', error.message);
     } else {
       setMenuItems(data);
-      console.log("Fetched menu items:", data); // Debugging statement
     }
   };
 
   const fetchCategories = async (menuId: string) => {
-    console.log("Fetching categories for menu ID:", menuId); // Debugging statement
     const { data, error } = await supabase
       .from('menu_categories')
       .select('*')
@@ -64,7 +61,6 @@ const MenusPage = () => {
       console.error('Error fetching categories:', error.message);
     } else {
       setCategories(data);
-      console.log("Fetched categories:", data); // Debugging statement
     }
   };
 
@@ -79,46 +75,21 @@ const MenusPage = () => {
     setState((prevState: any) => ({ ...prevState, [name]: value }));
   };
 
-  const addMenu = async () => {
-    const { data, error } = await supabase
-      .from('menus')
-      .insert({ ...newMenu, restaurant_id: restaurantId })
-      .single();
-
-    if (error) {
-      console.error('Error adding menu:', error.message);
-    } else {
-      setMenus([...menus, data]);
-      setNewMenu({ name: '', description: '', image_url: '' });
-    }
-  };
-
   const addMenuItem = async () => {
-    const { data, error } = await supabase
-      .from('menu_items')
-      .insert({ ...newMenuItem, menu_id: selectedMenu.id })
-      .single();
-
-    if (error) {
-      console.error('Error adding menu item:', error.message);
+    if (editingItem) {
+      await updateMenuItem(); // Call the update function if editing an item
     } else {
-      setMenuItems([...menuItems, data]);
-      setNewMenuItem({ name: '', description: '', price: 0, image_url: '', category_id: '' });
-    }
-  };
+      const { data, error } = await supabase
+        .from('menu_items')
+        .insert({ ...newMenuItem, menu_id: selectedMenu.id, hide: 'No' }) // Set hide to "No" by default
+        .single();
 
-  const deleteMenu = async (menuId: string) => {
-    const { error } = await supabase
-      .from('menus')
-      .delete()
-      .eq('id', menuId);
-
-    if (error) {
-      console.error('Error deleting menu:', error.message);
-    } else {
-      setMenus(menus.filter(menu => menu.id !== menuId));
-      setSelectedMenu(null);
-      setMenuItems([]);
+      if (error) {
+        console.error('Error adding menu item:', error.message);
+      } else {
+        setMenuItems([...menuItems, data]);
+        setNewMenuItem({ name: '', description: '', price: 0, image_url: '', category_id: '' });
+      }
     }
   };
 
@@ -135,45 +106,58 @@ const MenusPage = () => {
     }
   };
 
-  const updateMenu = async () => {
-    const { error } = await supabase
-      .from('menus')
-      .update(editingMenu)
-      .eq('id', editingMenu.id);
+  const updateMenuItem = async () => {
+    if (editingItem) {
+      const { error } = await supabase
+        .from('menu_items')
+        .update(editingItem)
+        .eq('id', editingItem.id);
 
-    if (error) {
-      console.error('Error updating menu:', error.message);
-    } else {
-      setMenus(menus.map(menu => (menu.id === editingMenu.id ? editingMenu : menu)));
-      setEditingMenu(null);
+      if (error) {
+        console.error('Error updating menu item:', error.message);
+      } else {
+        setMenuItems(menuItems.map(item => (item.id === editingItem.id ? editingItem : item)));
+        setEditingItem(null);
+        setNewMenuItem({ name: '', description: '', price: 0, image_url: '', category_id: '' });
+      }
     }
   };
 
-  const updateMenuItem = async () => {
+  const startEditingItem = (item: any) => {
+    setEditingItem(item);
+    setNewMenuItem({
+      name: item.name,
+      description: item.description,
+      price: item.price,
+      image_url: item.image_url,
+      category_id: item.category_id,
+      hide: item.hide
+    });
+  };
+
+  const toggleHideStatus = async (item: any) => {
+    const updatedHideStatus = item.hide === 'Yes' ? 'No' : 'Yes';
+    const updatedItem = { ...item, hide: updatedHideStatus };
+    
     const { error } = await supabase
       .from('menu_items')
-      .update(editingItem)
-      .eq('id', editingItem.id);
+      .update({ hide: updatedHideStatus })
+      .eq('id', updatedItem.id);
 
     if (error) {
-      console.error('Error updating menu item:', error.message);
+      console.error('Error updating hide status:', error.message);
     } else {
-      setMenuItems(menuItems.map(item => (item.id === editingItem.id ? editingItem : item)));
-      setEditingItem(null);
+      setMenuItems(menuItems.map(i => (i.id === updatedItem.id ? updatedItem : i)));
     }
   };
 
-  const generateRandomString = () => {
-    return Math.random().toString(36).substring(2, 10);
+  const generateNewQrCode = () => {
+    const randomString = Math.random().toString(36).substring(2, 10);
+    setQrValue(`https://playlystify.com?code=${randomString}`);
   };
 
   const handleQrColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQrColor(e.target.value);
-  };
-
-  const generateNewQrCode = () => {
-    const randomString = generateRandomString();
-    setQrValue(`https://playlystify.com?code=${randomString}`);
   };
 
   const printQRCode = () => {
@@ -204,12 +188,8 @@ const MenusPage = () => {
   };
 
   useEffect(() => {
-    generateNewQrCode(); // Generate an initial QR code when the component mounts
+    generateNewQrCode();
   }, [selectedMenu]);
-
-  useEffect(() => {
-    console.log("Categories state updated:", categories); // Debugging statement
-  }, [categories]);
 
   return (
     <div className="container mx-auto p-4">
@@ -272,12 +252,58 @@ const MenusPage = () => {
                 className="bg-blue-500 text-white p-2 w-full rounded"
                 onClick={addMenuItem}
               >
-                Add Item
+                {editingItem ? 'Update Item' : 'Add Item'}
               </button>
             </>
           )}
         </div>
       </div>
+
+      {/* Display the list of menu items grouped by category */}
+      {categories.length > 0 && (
+        <div className="flex justify-center mb-8">
+          <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-lg">
+            {categories.map((category) => (
+              <div key={category.id}>
+                <h2 className="text-xl font-semibold mb-4">{category.name}</h2>
+                <ul>
+                  {menuItems
+                    .filter((item) => item.category_id === category.id)
+                    .map((item) => (
+                      <li key={item.id} className="flex justify-between items-center mb-4">
+                        <div>
+                          <h3 className="text-lg font-semibold">{item.name}</h3>
+                          <p className="text-gray-600">${item.price.toFixed(2)}</p>
+                          <p className="text-gray-600">{item.description}</p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <FaEdit
+                            className="text-blue-500 cursor-pointer"
+                            onClick={() => startEditingItem(item)}
+                          />
+                          <FaTrash
+                            className="text-red-500 cursor-pointer"
+                            onClick={() => deleteMenuItem(item.id)}
+                          />
+                          <label className="flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={item.hide === 'Yes'}
+                              onChange={() => toggleHideStatus(item)}
+                            />
+                            <span className="ml-2">Hide</span>
+                          </label>
+                        </div>
+                      </li>
+                    ))}
+                </ul>
+                <hr className="my-6" /> {/* Horizontal line after each category */}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-center">
         <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-lg">
           <h2 className="text-2xl font-semibold text-center mb-6">QR Code</h2>
