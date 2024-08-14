@@ -2,6 +2,7 @@ import { useRouter } from 'next/router';
 import styles from '../../../components/Orders.module.css'; // Adjust the path according to your directory structure
 import { useEffect, useState } from 'react';
 import { supabase } from '../../../utils/supabaseClient'; // Import your Supabase client
+import Draggable from 'react-draggable';
 
 type Order = {
   id: string;
@@ -11,28 +12,39 @@ type Order = {
   total: number;
 };
 
+type Table = {
+  id: string;
+  seats: number;
+  shape: 'square' | 'rectangle' | 'circle';
+  position: { x: number; y: number };
+  occupied: boolean;
+  occupiedSince: Date | null;
+};
+
 const OrdersPage = () => {
   const router = useRouter();
   const { restaurantId } = router.query;
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [showPastOrders, setShowPastOrders] = useState(false);
-  const [tableNumbers, setTableNumbers] = useState<string[][]>(
-    Array(6)
-      .fill(null)
-      .map(() => Array(6).fill(''))
-  );
-  const [tableStatus, setTableStatus] = useState<string[][]>(
-    Array(6)
-      .fill(null)
-      .map(() => Array(6).fill(''))
-  );
-
-  const [showPopup, setShowPopup] = useState(false);
-  const [popupPosition, setPopupPosition] = useState<[number, number]>([0, 0]);
-  const [inputValue, setInputValue] = useState('');
+  const [tables, setTables] = useState<Table[]>(() => {
+    const savedTables = localStorage.getItem('tables');
+    return savedTables ? JSON.parse(savedTables) : [
+      { id: '200', seats: 4, shape: 'square', position: { x: 100, y: 100 }, occupied: false, occupiedSince: null },
+      { id: '201', seats: 4, shape: 'square', position: { x: 250, y: 100 }, occupied: false, occupiedSince: null },
+      { id: '202', seats: 4, shape: 'rectangle', position: { x: 400, y: 100 }, occupied: false, occupiedSince: null },
+      { id: '203', seats: 4, shape: 'rectangle', position: { x: 550, y: 100 }, occupied: false, occupiedSince: null },
+      { id: '204', seats: 4, shape: 'circle', position: { x: 700, y: 100 }, occupied: false, occupiedSince: null },
+      { id: '205', seats: 4, shape: 'square', position: { x: 100, y: 250 }, occupied: false, occupiedSince: null },
+      { id: '206', seats: 4, shape: 'square', position: { x: 250, y: 250 }, occupied: false, occupiedSince: null },
+      { id: '207', seats: 4, shape: 'rectangle', position: { x: 400, y: 250 }, occupied: false, occupiedSince: null },
+      { id: '208', seats: 4, shape: 'rectangle', position: { x: 550, y: 250 }, occupied: false, occupiedSince: null },
+      { id: '209', seats: 4, shape: 'circle', position: { x: 700, y: 250 }, occupied: false, occupiedSince: null },
+    ];
+  });
 
   const [editMode, setEditMode] = useState(false);
+  const [showShapeModal, setShowShapeModal] = useState(false);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -53,62 +65,79 @@ const OrdersPage = () => {
     fetchOrders();
   }, [restaurantId]);
 
-  const handleTableNumberChange = (
-    rowIndex: number,
-    cellIndex: number,
-    value: string
-  ) => {
-    const updatedTableNumbers = [...tableNumbers];
-    updatedTableNumbers[rowIndex][cellIndex] = value;
-    setTableNumbers(updatedTableNumbers);
+  useEffect(() => {
+    localStorage.setItem('tables', JSON.stringify(tables));
+  }, [tables]);
+
+  useEffect(() => {
+    if (tables.some(table => table.occupied)) {
+      const interval = setInterval(() => {
+        setTables([...tables]); // Trigger re-render to update time
+      }, 1000);
+
+      return () => clearInterval(interval); // Clean up interval on unmount
+    }
+  }, [tables]);
+
+  const handleAddTable = (shape: 'square' | 'rectangle' | 'circle') => {
+    const newTable: Table = {
+      id: (tables.length + 200).toString(),
+      seats: 4,
+      shape,
+      position: { x: 0, y: 0 },
+      occupied: false,
+      occupiedSince: null,
+    };
+    setTables([...tables, newTable]);
+    setShowShapeModal(false); // Hide the shape selection modal
   };
 
-  const assignTableNumber = async () => {
-    const [rowIndex, cellIndex] = popupPosition;
-    const tableNumber = inputValue;
+  const handleSeatsChange = (tableId: string, seats: number) => {
+    const updatedTables = tables.map(table => 
+      table.id === tableId ? { ...table, seats } : table
+    );
+    setTables(updatedTables);
+  };
 
-    // Update the local state
-    handleTableNumberChange(rowIndex, cellIndex, tableNumber);
-    const updatedTableStatus = [...tableStatus];
-    updatedTableStatus[rowIndex][cellIndex] = 'green';
-    setTableStatus(updatedTableStatus);
-    setShowPopup(false);
-    setInputValue('');
+  const handleTableNumberChange = (tableId: string, newId: string) => {
+    const updatedTables = tables.map(table => 
+      table.id === tableId ? { ...table, id: newId } : table
+    );
+    setTables(updatedTables);
+  };
 
-    // Insert or update the table in the Supabase database
-    try {
-      const { data, error } = await supabase.from('tables').insert([
-        {
-          table_number: tableNumber,
-          restaurant_id: restaurantId,
-        },
-      ]);
+  const handleDrag = (e, position, tableId) => {
+    const { x, y } = position;
+    setTables(tables.map(table => 
+      table.id === tableId ? { ...table, position: { x, y } } : table
+    ));
+  };
 
-      if (error) {
-        console.error('Error inserting table:', error.message);
-      } else {
-        console.log('Table inserted:', data);
-      }
-    } catch (error) {
-      console.error('Error inserting table:', error);
+  const handleTableClick = (tableId: string) => {
+    if (!editMode) {
+      const updatedTables = tables.map(table =>
+        table.id === tableId 
+          ? { 
+              ...table, 
+              occupied: !table.occupied,
+              occupiedSince: !table.occupied ? new Date() : null,
+            } 
+          : table
+      );
+      setTables(updatedTables);
     }
   };
 
-  const handleCellClick = (rowIndex: number, cellIndex: number) => {
-    if (tableNumbers[rowIndex][cellIndex] && !editMode) {
-      const updatedTableStatus = [...tableStatus];
-      if (tableStatus[rowIndex][cellIndex] === 'green') {
-        updatedTableStatus[rowIndex][cellIndex] = 'red';
-      } else if (tableStatus[rowIndex][cellIndex] === 'red') {
-        updatedTableStatus[rowIndex][cellIndex] = '';
-      } else {
-        updatedTableStatus[rowIndex][cellIndex] = 'green';
-      }
-      setTableStatus(updatedTableStatus);
-    } else {
-      setPopupPosition([rowIndex, cellIndex]);
-      setShowPopup(true);
-    }
+  const handleDeleteTable = (tableId: string) => {
+    setTables(tables.filter(table => table.id !== tableId));
+  };
+
+  const formatTimeElapsed = (startTime: Date | null) => {
+    if (!startTime) return '';
+    const elapsed = Date.now() - new Date(startTime).getTime();
+    const minutes = Math.floor(elapsed / 60000);
+    const seconds = Math.floor((elapsed % 60000) / 1000);
+    return `${minutes}m ${seconds}s`;
   };
 
   return (
@@ -120,7 +149,30 @@ const OrdersPage = () => {
         <button onClick={() => setEditMode(!editMode)}>
           {editMode ? 'Disable Edit' : 'Enable Edit'}
         </button>
+        <button onClick={() => setShowShapeModal(true)}>Add Table</button>
       </div>
+      {showShapeModal && (
+        <div className={styles.modal}>
+          <div className={styles.modalContent}>
+            <h3>Select Table Shape</h3>
+            <div className={styles.shapeOptions}>
+              <div
+                className={`${styles.shapeOption} ${styles.square}`}
+                onClick={() => handleAddTable('square')}
+              />
+              <div
+                className={`${styles.shapeOption} ${styles.rectangle}`}
+                onClick={() => handleAddTable('rectangle')}
+              />
+              <div
+                className={`${styles.shapeOption} ${styles.circle}`}
+                onClick={() => handleAddTable('circle')}
+              />
+            </div>
+            <button onClick={() => setShowShapeModal(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
       <div className={`${styles.ordersTableContainer}`}>
         <table className={`${styles.ordersTable}`}>
           <thead>
@@ -160,35 +212,52 @@ const OrdersPage = () => {
       <div className={styles.tableMapContainer}>
         <h2 className="text-2xl font-semibold mb-4">Table Layout</h2>
         <div className={styles.tableMap} id="tableMap">
-          {tableNumbers.map((row, rowIndex) => (
-            <div key={rowIndex} className={styles.tableRow}>
-              {row.map((tableNumber, cellIndex) => (
-                <div
-                  key={cellIndex}
-                  className={`${styles.tableCell} ${styles[tableStatus[rowIndex][cellIndex]]}`}
-                  onClick={() => handleCellClick(rowIndex, cellIndex)}
-                >
-                  {tableNumber || ''}
-                </div>
-              ))}
-            </div>
+          {tables.map((table) => (
+            <Draggable
+              key={table.id}
+              bounds="parent"
+              position={{ x: table.position.x, y: table.position.y }}
+              onStop={(e, position) => handleDrag(e, position, table.id)}
+              disabled={!editMode}
+            >
+              <div
+                className={`${styles.tableCell} ${styles[table.shape]} ${table.occupied ? styles.occupied : styles.empty}`}
+                onClick={() => handleTableClick(table.id)}
+                title={table.occupied ? `Occupied for: ${formatTimeElapsed(table.occupiedSince)}` : ''}
+              >
+                {editMode ? (
+                  <>
+                    <input
+                      type="text"
+                      value={table.id}
+                      onChange={(e) => handleTableNumberChange(table.id, e.target.value)}
+                      className={styles.tableNumberInput}
+                    />
+                    <select
+                      value={table.seats}
+                      onChange={(e) => handleSeatsChange(table.id, Number(e.target.value))}
+                      className={styles.seatsSelect}
+                      onClick={(e) => e.stopPropagation()} // Prevent dragging when interacting with dropdown
+                    >
+                      {Array.from({ length: 20 }, (_, i) => i + 1).map(seats => (
+                        <option key={seats} value={seats}>
+                          {seats} Seats
+                        </option>
+                      ))}
+                    </select>
+                    <button className={styles.deleteButton} onClick={() => handleDeleteTable(table.id)}>Delete</button>
+                  </>
+                ) : (
+                  <>
+                    Table {table.id} <br />
+                    {table.seats} Seats
+                  </>
+                )}
+              </div>
+            </Draggable>
           ))}
         </div>
       </div>
-      {showPopup && (
-        <>
-          <div className={styles.overlay} onClick={() => setShowPopup(false)} />
-          <div className={styles.popup}>
-            <input
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Table #"
-            />
-            <button onClick={assignTableNumber}>Assign</button>
-          </div>
-        </>
-      )}
     </div>
   );
 };
