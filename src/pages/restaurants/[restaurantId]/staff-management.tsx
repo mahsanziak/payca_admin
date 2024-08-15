@@ -66,7 +66,7 @@ const StaffManagement = () => {
   };
 
   const handleSaveStaff = async (id: string) => {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('staff')
       .update({
         name: editingStaff.name,
@@ -77,10 +77,10 @@ const StaffManagement = () => {
 
     if (error) {
       console.error('Error updating staff:', error.message);
-    } else if (data && data.length > 0) {
-      setStaff(staff.map((s) => (s.id === id ? data[0] : s)));
-      setEditingStaffId(null);
-      setEditingStaff({});
+    } else {
+      setStaff(staff.map((s) => (s.id === id ? { ...s, ...editingStaff } : s)));
+      setEditingStaffId(null); // Exit edit mode
+      setEditingStaff({}); // Clear the editing staff state
     }
   };
 
