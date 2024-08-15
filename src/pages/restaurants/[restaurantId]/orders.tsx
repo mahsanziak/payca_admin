@@ -21,6 +21,7 @@ type Table = {
   position: { x: number; y: number };
   occupied: boolean;
   occupiedSince: Date | null;
+  orderEndTime: Date | null;
 };
 
 const OrdersPage = () => {
@@ -52,6 +53,7 @@ const OrdersPage = () => {
             position: { x: table.position_x, y: table.position_y },
             occupied: table.occupied,
             occupiedSince: table.occupied_since ? new Date(table.occupied_since) : null,
+            orderEndTime: table.order_end_time ? new Date(table.order_end_time) : null,
           }));
           setTables(formattedTables);
         }
@@ -100,6 +102,7 @@ const OrdersPage = () => {
       position_y: 0,
       occupied: false,
       occupied_since: null,
+      order_end_time: null,
     };
 
     const { data, error } = await supabase
@@ -118,6 +121,7 @@ const OrdersPage = () => {
         position: { x: data[0].position_x, y: data[0].position_y },
         occupied: data[0].occupied,
         occupiedSince: data[0].occupied_since ? new Date(data[0].occupied_since) : null,
+        orderEndTime: data[0].order_end_time ? new Date(data[0].order_end_time) : null,
       };
       setTables([...tables, formattedTable]);
     }
@@ -180,13 +184,18 @@ const OrdersPage = () => {
   };
 
   const handleTableClick = async (tableId: string) => {
-    if (!editMode) {
+    const selectedTable = tables.find(table => table.id === tableId);
+    const now = new Date();
+
+    if (selectedTable && !selectedTable.occupied) {
+      // If the table is not occupied, set it to occupied and populate `occupied_since`
       const updatedTables = tables.map(table =>
         table.id === tableId 
           ? { 
               ...table, 
-              occupied: !table.occupied,
-              occupiedSince: !table.occupied ? new Date() : null,
+              occupied: true,
+              occupiedSince: now,
+              orderEndTime: null, // Reset the order end time
             } 
           : table
       );
@@ -195,8 +204,33 @@ const OrdersPage = () => {
       const { error } = await supabase
         .from('tables')
         .update({ 
-          occupied: !tables.find(table => table.id === tableId)?.occupied,
-          occupied_since: !tables.find(table => table.id === tableId)?.occupied ? new Date().toISOString() : null,
+          occupied: true,
+          occupied_since: now.toISOString(),
+          order_end_time: null, // Reset the order end time in the database
+        })
+        .eq('id', tableId);
+
+      if (error) {
+        console.error('Error updating table occupation status:', error);
+      }
+    } else if (selectedTable && selectedTable.occupied) {
+      // If the table is already occupied, set `order_end_time`
+      const updatedTables = tables.map(table =>
+        table.id === tableId 
+          ? { 
+              ...table, 
+              occupied: false,
+              orderEndTime: now,
+            } 
+          : table
+      );
+      setTables(updatedTables);
+
+      const { error } = await supabase
+        .from('tables')
+        .update({ 
+          occupied: false,
+          order_end_time: now.toISOString(),
         })
         .eq('id', tableId);
 
@@ -223,8 +257,7 @@ const OrdersPage = () => {
     if (!startTime) return '';
     const elapsed = Date.now() - new Date(startTime).getTime();
     const minutes = Math.floor(elapsed / 60000);
-    const seconds = Math.floor((elapsed % 60000) / 1000);
-    return `${minutes}m ${seconds}s`;
+    return `${minutes}m`;
   };
 
   return (

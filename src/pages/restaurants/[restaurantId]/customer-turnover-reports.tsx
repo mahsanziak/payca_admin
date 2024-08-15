@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import {
   BarChart,
@@ -14,12 +14,7 @@ import {
   Cell,
 } from 'recharts';
 import { FaArrowLeft } from 'react-icons/fa';
-
-const averageOrderData = [
-  { name: 'Average Order Size', size: 50 },
-  { name: 'Average Tip Size', size: 10 },
-  { name: 'Average Order Duration', duration: 30 },
-];
+import { supabase } from '../../../utils/supabaseClient';
 
 const checkoutData = [
   { name: 'Checked Out', value: 75 },
@@ -30,6 +25,48 @@ const COLORS = ['#FF8042', '#00C49F'];
 
 const CustomerTurnoverReportsPage = () => {
   const router = useRouter();
+  const [averageOrderDuration, setAverageOrderDuration] = useState<number | null>(null);
+
+  useEffect(() => {
+    const calculateAverageOrderDuration = async () => {
+      const { data: tables, error } = await supabase
+        .from('tables')
+        .select('occupied_since, order_end_time')
+        .not('occupied_since', 'is', null)
+        .not('order_end_time', 'is', null);
+
+      if (error) {
+        console.error('Error fetching table data:', error);
+        return;
+      }
+
+      if (tables && tables.length > 0) {
+        let totalDuration = 0;
+        let count = 0;
+
+        tables.forEach(table => {
+          const startTime = new Date(table.occupied_since);
+          const endTime = new Date(table.order_end_time);
+          const duration = (endTime.getTime() - startTime.getTime()) / 60000; // Duration in minutes
+          
+          totalDuration += duration;
+          count += 1;
+        });
+
+        setAverageOrderDuration(totalDuration / count);
+      } else {
+        setAverageOrderDuration(0); // Set to 0 if no data
+      }
+    };
+
+    calculateAverageOrderDuration();
+  }, []);
+
+  const averageOrderData = [
+    { name: 'Average Order Size', size: 50 }, // This is still hardcoded as an example
+    { name: 'Average Tip Size', size: 10 },   // This is still hardcoded as an example
+    { name: 'Average Order Duration', duration: averageOrderDuration || 0 }, // Calculated value
+  ];
 
   return (
     <div className="container mx-auto p-4">
