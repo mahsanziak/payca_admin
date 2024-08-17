@@ -95,9 +95,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
             </Link>
           </li>
           <li>
+            <Link href={`/restaurants/${restaurantId}/inventory-management`} legacyBehavior>
+              <a className="flex items-center p-2 hover:bg-gray-800 rounded-md">
+                <i className="fas fa-warehouse"></i> {/* Inventory Management Icon */}
+                {isOpen && <span className="ml-4">Inventory Management</span>}
+              </a>
+            </Link>
+          </li>
+          <li>
             <Link href={`/restaurants/${restaurantId}/staff-management`} legacyBehavior>
               <a className="flex items-center p-2 hover:bg-gray-800 rounded-md">
-                <i className="fas fa-users-cog"></i> {/* Added icon */}
+                <i className="fas fa-users-cog"></i>
                 {isOpen && <span className="ml-4">Staff Management</span>}
               </a>
             </Link>

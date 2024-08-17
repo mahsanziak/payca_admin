@@ -11,6 +11,7 @@ type Order = {
   table: string;
   time: string;
   total: number;
+  waiterName: string | null;
 };
 
 type Table = {
@@ -67,12 +68,39 @@ const OrdersPage = () => {
     const fetchOrders = async () => {
       if (restaurantId) {
         try {
-          const response = await fetch(`/api/orders?restaurantId=${restaurantId}`);
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+          const { data, error } = await supabase
+            .from('orders')
+            .select(`
+              id,
+              status,
+              total_price,
+              created_at,
+              table_id,
+              staff:staff_id ( name )
+            `)
+            .eq('restaurant_id', restaurantId);
+
+          if (error) {
+            console.error('Error fetching orders:', error);
+          } else {
+            console.log('Raw Orders Data:', data);
+            const formattedOrders = data.map(order => ({
+              id: order.id,
+              status: order.status,
+              table: tables.find(t => t.id === order.table_id)?.table_number || 0,
+              time: new Date(order.created_at).toLocaleString('en-US', {
+                hour: 'numeric',
+                minute: 'numeric',
+                hour12: true,
+                month: 'short',
+                day: 'numeric',
+              }),
+              total: order.total_price,
+              waiterName: order.staff ? order.staff.name : null,
+            }));
+            console.log('Formatted Orders:', formattedOrders);
+            setOrders(formattedOrders);
           }
-          const data: Order[] = await response.json();
-          setOrders(data);
         } catch (error) {
           console.error('Error fetching orders:', error);
         }
@@ -80,7 +108,7 @@ const OrdersPage = () => {
     };
 
     fetchOrders();
-  }, [restaurantId]);
+  }, [restaurantId, tables]);
 
   useEffect(() => {
     if (tables.some(table => table.occupied)) {
@@ -184,6 +212,8 @@ const OrdersPage = () => {
   };
 
   const handleTableClick = async (tableId: string) => {
+    if (editMode) return; // Prevent toggling status if in edit mode
+
     const selectedTable = tables.find(table => table.id === tableId);
     const now = new Date();
 
@@ -302,13 +332,14 @@ const OrdersPage = () => {
               <th>Table</th>
               <th>Time</th>
               <th>Total</th>
+              <th>Waiter</th>
             </tr>
           </thead>
           <tbody>
             {orders.length > 0 ? (
               orders
                 .filter(order =>
-                  showPastOrders ? order.status === 'completed' : order.status !== 'completed'
+                  showPastOrders ? order.status === 'ready' : order.status === 'pending'
                 )
                 .map(order => (
                   <tr key={order.id}>
@@ -316,12 +347,13 @@ const OrdersPage = () => {
                     <td>{order.status}</td>
                     <td>{order.table}</td>
                     <td>{order.time}</td>
-                    <td>{order.total}</td>
+                    <td>{order.total.toFixed(2)}</td>
+                    <td>{order.waiterName || ''}</td>
                   </tr>
                 ))
             ) : (
               <tr>
-                <td colSpan={5} className={styles.noData}>
+                <td colSpan={6} className={styles.noData}>
                   <i className="fas fa-database"></i> No data available
                 </td>
               </tr>

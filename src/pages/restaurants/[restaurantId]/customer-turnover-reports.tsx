@@ -13,7 +13,7 @@ import {
   Pie,
   Cell,
 } from 'recharts';
-import { FaArrowLeft, FaChartLine, FaChartPie } from 'react-icons/fa';
+import { FaArrowLeft } from 'react-icons/fa';
 import { supabase } from '../../../utils/supabaseClient';
 
 const COLORS = ['#FF8042', '#00C49F'];
@@ -23,7 +23,8 @@ const CustomerTurnoverReportsPage = () => {
   const [averageOrderDuration, setAverageOrderDuration] = useState<number | null>(null);
   const [occupancyData, setOccupancyData] = useState([]);
   const [occupancyByTimeData, setOccupancyByTimeData] = useState([]);
-  const [showOccupancyByTime, setShowOccupancyByTime] = useState(false);
+  const [occupancyByDayData, setOccupancyByDayData] = useState([]);
+  const [selectedFilter, setSelectedFilter] = useState('Overview');
 
   useEffect(() => {
     const calculateAverageOrderDuration = async () => {
@@ -130,6 +131,49 @@ const CustomerTurnoverReportsPage = () => {
     fetchOccupancyByTimeData();
   }, []);
 
+  useEffect(() => {
+    const fetchOccupancyByDayData = async () => {
+      const { data: orders, error } = await supabase
+        .from('tables')
+        .select('occupied_since, order_end_time');
+
+      if (error) {
+        console.error('Error fetching occupancy by day data:', error);
+        return;
+      }
+
+      // Initialize data for each day of the week with 0
+      const dayData = {
+        Monday: 0,
+        Tuesday: 0,
+        Wednesday: 0,
+        Thursday: 0,
+        Friday: 0,
+        Saturday: 0,
+        Sunday: 0,
+      };
+
+      // Process the data to create the day of the week occupancy graph data
+      if (orders && orders.length > 0) {
+        orders.forEach(order => {
+          const startTime = new Date(order.occupied_since);
+          const dayOfWeek = startTime.toLocaleDateString('en-US', { weekday: 'long' });
+
+          dayData[dayOfWeek]++;
+        });
+
+        setOccupancyByDayData(
+          Object.keys(dayData).map(day => ({
+            day: day,
+            seatsOccupied: dayData[day],
+          }))
+        );
+      }
+    };
+
+    fetchOccupancyByDayData();
+  }, []);
+
   const averageOrderData = [
     { name: 'Average Order Size', size: 50 }, // Example hardcoded data
     { name: 'Average Tip Size', size: 10 },   // Example hardcoded data
@@ -166,18 +210,21 @@ const CustomerTurnoverReportsPage = () => {
 
       {/* Restaurant Occupancy */}
       <div className="bg-white p-4 rounded shadow-lg mb-8">
-        <h3 className="text-xl font-semibold mb-4">Restaurant Occupancy</h3>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-xl font-semibold">Restaurant Occupancy</h3>
+          <select
+            className="border border-gray-300 rounded px-4 py-2"
+            value={selectedFilter}
+            onChange={(e) => setSelectedFilter(e.target.value)}
+          >
+            <option value="Overview">Overview</option>
+            <option value="ByTime">By Time of Day</option>
+            <option value="ByDay">By Day of the Week</option>
+          </select>
+        </div>
+        
         <ResponsiveContainer width="100%" height={400}>
-          {showOccupancyByTime ? (
-            <BarChart data={occupancyByTimeData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="time" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="seatsOccupied" fill="#FF8042" />
-            </BarChart>
-          ) : (
+          {selectedFilter === 'Overview' ? (
             <PieChart>
               <Pie
                 data={occupancyData}
@@ -195,25 +242,26 @@ const CustomerTurnoverReportsPage = () => {
               </Pie>
               <Tooltip />
             </PieChart>
+          ) : selectedFilter === 'ByTime' ? (
+            <BarChart data={occupancyByTimeData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="time" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="seatsOccupied" fill="#FF8042" />
+            </BarChart>
+          ) : (
+            <BarChart data={occupancyByDayData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="day" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="seatsOccupied" fill="#FF8042" />
+            </BarChart>
           )}
         </ResponsiveContainer>
-
-        <button
-          className="mt-4 flex items-center bg-blue-500 text-white px-4 py-2 rounded"
-          onClick={() => setShowOccupancyByTime(!showOccupancyByTime)}
-        >
-          {showOccupancyByTime ? (
-            <>
-              <FaChartPie className="mr-2" />
-              View Occupancy Overview
-            </>
-          ) : (
-            <>
-              <FaChartLine className="mr-2" />
-              View Occupancy by Time
-            </>
-          )}
-        </button>
       </div>
     </div>
   );
