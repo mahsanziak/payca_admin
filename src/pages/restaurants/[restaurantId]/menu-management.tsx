@@ -7,6 +7,18 @@ const MenuManagementPage = () => {
   const router = useRouter();
   const { restaurantId } = router.query;
 
+  // Handle case where restaurantId might not be available
+  if (!restaurantId) {
+    return (
+      <div className={styles.container}>
+        <h2 className={styles.title}>Menu Management</h2>
+        <p className={styles.error}>
+          Restaurant ID not found. Please select a restaurant first.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.container}>
       <h2 className={styles.title}>Menu Management</h2>
@@ -18,34 +30,27 @@ const MenuManagementPage = () => {
             <span className={styles.description}>Manage and customize your menus.</span>
           </a>
         </Link>
-        {/* <Link href={`/restaurants/${restaurantId}/modifiers`} legacyBehavior>
-          <a className={styles.menuItem}>
-            <i className="fas fa-cogs fa-2x"></i>
-            <h3 className={styles.menuTitle}>Modifiers</h3>
-            <span className={styles.description}>Adjust menu items with modifiers.</span>
-          </a>
-        </Link> */}
-        <Link href={`/restaurants/${restaurantId}/promotions`} legacyBehavior>
-          <a className={styles.menuItem}>
-            <i className="fas fa-bullhorn fa-2x"></i>
-            <h3 className={styles.menuTitle}>Promotions</h3>
-            <span className={styles.description}>Set up in-app promotions and manage promo codes.</span>
-          </a>
-        </Link>
-        <Link href={`/restaurants/${restaurantId}/archive`} legacyBehavior>
-          <a className={styles.menuItem}>
-            <i className="fas fa-archive fa-2x"></i>
-            <h3 className={styles.menuTitle}>Archive</h3>
-            <span className={styles.description}>Access and manage archived items.</span>
-          </a>
-        </Link>
-        <Link href={`/restaurants/${restaurantId}/email-notifications`} legacyBehavior>
-          <a className={styles.menuItem}>
-            <i className="fas fa-envelope fa-2x"></i>
-            <h3 className={styles.menuTitle}>Email Notifications</h3>
-            <span className={styles.description}>Setup frequency and times for receiving emails for reports.</span>
-          </a>
-        </Link>
+
+        {/* Promotions - Coming Soon */}
+        <div className={`${styles.menuItem} ${styles.comingSoon}`}>
+          <i className="fas fa-bullhorn fa-2x"></i>
+          <h3 className={styles.menuTitle}>Promotions</h3>
+          <span className={styles.description}>Coming Soon!</span>
+        </div>
+
+        {/* Archive - Coming Soon */}
+        <div className={`${styles.menuItem} ${styles.comingSoon}`}>
+          <i className="fas fa-archive fa-2x"></i>
+          <h3 className={styles.menuTitle}>Archive</h3>
+          <span className={styles.description}>Coming Soon!</span>
+        </div>
+
+        {/* Email Notifications - Coming Soon */}
+        <div className={`${styles.menuItem} ${styles.comingSoon}`}>
+          <i className="fas fa-envelope fa-2x"></i>
+          <h3 className={styles.menuTitle}>Email Notifications</h3>
+          <span className={styles.description}>Coming Soon!</span>
+        </div>
       </div>
     </div>
   );

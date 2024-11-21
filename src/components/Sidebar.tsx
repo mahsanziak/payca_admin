@@ -14,19 +14,21 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const { restaurantId } = router.query;
   const [restaurantName, setRestaurantName] = useState<string>('');
   const [restaurantLocation, setRestaurantLocation] = useState<string>('');
+  const [pricingTier, setPricingTier] = useState<string>(''); // Add state for pricing tier
 
   useEffect(() => {
     const fetchRestaurantDetails = async () => {
       if (restaurantId) {
         const { data, error } = await supabase
           .from('restaurants')
-          .select('name, address')
+          .select('name, address, pricing_tier')
           .eq('id', restaurantId)
           .single();
 
         if (data) {
           setRestaurantName(data.name);
           setRestaurantLocation(data.address);
+          setPricingTier(data.pricing_tier); // Set the pricing tier
         } else {
           console.error('Error fetching restaurant details:', error.message);
         }
@@ -35,6 +37,25 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
 
     fetchRestaurantDetails();
   }, [restaurantId]);
+
+  useEffect(() => {
+    // Restrict access based on pricing tier
+    const restrictedPaths = [
+      '/reports',
+      '/recommendations',
+      '/orders',
+      '/inventory-dashboard',
+      '/staff-management',
+      '/feedbacks',
+    ];
+
+    if (pricingTier === 'Basic') {
+      const currentPath = router.asPath.split('/').pop(); // Get current route name
+      if (restrictedPaths.includes(`/${currentPath}`)) {
+        router.push(`/restaurants/${restaurantId}/dashboard`); // Redirect to dashboard
+      }
+    }
+  }, [pricingTier, restaurantId, router]);
 
   return (
     <div className="relative">
@@ -62,25 +83,37 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
               </a>
             </Link>
           </li>
-          <li>
+          <li className={`${pricingTier === 'Basic' ? styles.locked : ''}`}>
             <Link href={`/restaurants/${restaurantId}/reports`} legacyBehavior>
-              <a className="flex items-center p-2 hover:bg-gray-800 rounded-md">
+              <a
+                className={`flex items-center p-2 hover:bg-gray-800 rounded-md ${
+                  pricingTier === 'Basic' ? 'pointer-events-none opacity-50' : ''
+                }`}
+              >
                 <i className="fas fa-chart-line"></i>
                 {isOpen && <span className="ml-4">Reports</span>}
               </a>
             </Link>
           </li>
-          <li>
+          <li className={`${pricingTier === 'Basic' ? styles.locked : ''}`}>
             <Link href={`/restaurants/${restaurantId}/recommendations`} legacyBehavior>
-              <a className="flex items-center p-2 hover:bg-gray-800 rounded-md">
+              <a
+                className={`flex items-center p-2 hover:bg-gray-800 rounded-md ${
+                  pricingTier === 'Basic' ? 'pointer-events-none opacity-50' : ''
+                }`}
+              >
                 <i className="fas fa-star"></i>
                 {isOpen && <span className="ml-4">Recommendations</span>}
               </a>
             </Link>
           </li>
-          <li>
+          <li className={`${pricingTier === 'Basic' ? styles.locked : ''}`}>
             <Link href={`/restaurants/${restaurantId}/orders`} legacyBehavior>
-              <a className="flex items-center p-2 hover:bg-gray-800 rounded-md">
+              <a
+                className={`flex items-center p-2 hover:bg-gray-800 rounded-md ${
+                  pricingTier === 'Basic' ? 'pointer-events-none opacity-50' : ''
+                }`}
+              >
                 <i className="fas fa-receipt"></i>
                 {isOpen && <span className="ml-4">Orders</span>}
               </a>
@@ -94,31 +127,42 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
               </a>
             </Link>
           </li>
-          <li>
-            <Link href={`/restaurants/${restaurantId}/inventory-management`} legacyBehavior>
-              <a className="flex items-center p-2 hover:bg-gray-800 rounded-md">
-                <i className="fas fa-warehouse"></i> {/* Inventory Management Icon */}
+          <li className={`${pricingTier === 'Basic' ? styles.locked : ''}`}>
+            <Link href={`/restaurants/${restaurantId}/inventory-dashboard`} legacyBehavior>
+              <a
+                className={`flex items-center p-2 hover:bg-gray-800 rounded-md ${
+                  pricingTier === 'Basic' ? 'pointer-events-none opacity-50' : ''
+                }`}
+              >
+                <i className="fas fa-warehouse"></i>
                 {isOpen && <span className="ml-4">Inventory Management</span>}
               </a>
             </Link>
           </li>
-          <li>
+          <li className={`${pricingTier === 'Basic' ? styles.locked : ''}`}>
             <Link href={`/restaurants/${restaurantId}/staff-management`} legacyBehavior>
-              <a className="flex items-center p-2 hover:bg-gray-800 rounded-md">
+              <a
+                className={`flex items-center p-2 hover:bg-gray-800 rounded-md ${
+                  pricingTier === 'Basic' ? 'pointer-events-none opacity-50' : ''
+                }`}
+              >
                 <i className="fas fa-users-cog"></i>
                 {isOpen && <span className="ml-4">Staff Management</span>}
               </a>
             </Link>
           </li>
-          <li>
+          <li className={`${pricingTier === 'Basic' ? styles.locked : ''}`}>
             <Link href={`/restaurants/${restaurantId}/feedbacks`} legacyBehavior>
-              <a className="flex items-center p-2 hover:bg-gray-800 rounded-md">
+              <a
+                className={`flex items-center p-2 hover:bg-gray-800 rounded-md ${
+                  pricingTier === 'Basic' ? 'pointer-events-none opacity-50' : ''
+                }`}
+              >
                 <i className="fas fa-comments"></i>
                 {isOpen && <span className="ml-4">Feedbacks</span>}
               </a>
             </Link>
           </li>
-
           <li>
             <Link href={`/restaurants/${restaurantId}/contact-us`} legacyBehavior>
               <a className="flex items-center p-2 hover:bg-gray-800 rounded-md">

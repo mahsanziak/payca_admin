@@ -8,57 +8,10 @@ import '../styles/globals.css';
 function MyApp({ Component, pageProps }: AppProps) {
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const router = useRouter();
 
   useEffect(() => {
-    const handleAuthChange = async (event: string, session: any) => {
-      console.log('Auth change detected:', event, session);
-      if (session) {
-        const user = session.user;
-        const restaurantId = user?.user_metadata?.restaurant_id;
-        if (restaurantId) {
-          console.log(`Navigating to /restaurants/${restaurantId}/dashboard`);
-          // router.push(`/restaurants/${restaurantId}/dashboard`);
-        } else {
-          console.error('Restaurant ID not found in user_metadata');
-        }
-      } else {
-        console.log('No session found, redirecting to root');
-        // router.push('/');
-      }
-    };
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(handleAuthChange);
-
-    const checkSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      console.log('Session check:', session);
-      if (session) {
-        const user = session.user;
-        const restaurantId = user?.user_metadata?.restaurant_id;
-        if (restaurantId) {
-          console.log(`Session found. Navigating to /restaurants/${restaurantId}/dashboard`);
-          // router.push(`/restaurants/${restaurantId}/dashboard`);
-        } else {
-          console.error('Restaurant ID not found in user_metadata');
-        }
-      } else {
-        console.log('No active session found, redirecting to root');
-        // router.push('/');
-      }
-      setLoading(false);
-    };
-
-    checkSession();
-
-    return () => {
-      if (authListener && authListener.subscription) {
-        authListener.subscription.unsubscribe();
-      }
-    };
-  }, [router]);
+    setLoading(false); // Skip session checks
+  }, []);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);

@@ -25,6 +25,7 @@ const Dashboard = () => {
   const router = useRouter();
   const { restaurantId } = router.query;
   const [restaurantName, setRestaurantName] = useState('');
+  const [pricingTier, setPricingTier] = useState('');
   const [revenue, setRevenue] = useState(0);
   const [ordersCount, setOrdersCount] = useState(0);
   const [customersCount, setCustomersCount] = useState(0);
@@ -36,91 +37,95 @@ const Dashboard = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
-    const fetchRestaurantName = async () => {
+    const fetchRestaurantDetails = async () => {
       if (restaurantId) {
         const { data, error } = await supabase
           .from('restaurants')
-          .select('name')
+          .select('name, pricing_tier')
           .eq('id', restaurantId)
           .single();
+
         if (data) {
           setRestaurantName(data.name);
+          setPricingTier(data.pricing_tier);
         } else {
-          console.error('Error fetching restaurant name:', error.message);
+          console.error('Error fetching restaurant details:', error.message);
         }
       }
     };
 
-    const fetchTables = async () => {
-      if (restaurantId) {
-        const { data: tables, error } = await supabase
-          .from('tables')
-          .select('id, table_number')
-          .eq('restaurant_id', restaurantId);
+    fetchRestaurantDetails();
+  }, [restaurantId]);
 
-        if (error) {
-          console.error('Error fetching tables:', error.message);
-        } else {
-          const tableMapping: Record<string, number> = {};
-          tables.forEach((table: Table) => {
-            tableMapping[table.id] = table.table_number;
-          });
-          setTablesMap(tableMapping);
-        }
+  const fetchTables = async () => {
+    if (restaurantId) {
+      const { data: tables, error } = await supabase
+        .from('tables')
+        .select('id, table_number')
+        .eq('restaurant_id', restaurantId);
+
+      if (error) {
+        console.error('Error fetching tables:', error.message);
+      } else {
+        const tableMapping: Record<string, number> = {};
+        tables.forEach((table: Table) => {
+          tableMapping[table.id] = table.table_number;
+        });
+        setTablesMap(tableMapping);
       }
-    };
+    }
+  };
 
-    const fetchWaiters = async () => {
-      if (restaurantId) {
-        const { data: waiters, error } = await supabase
-          .from('staff')
-          .select('id, name')
-          .eq('restaurant_id', restaurantId);
+  const fetchWaiters = async () => {
+    if (restaurantId) {
+      const { data: waiters, error } = await supabase
+        .from('staff')
+        .select('id, name')
+        .eq('restaurant_id', restaurantId);
 
-        if (error) {
-          console.error('Error fetching waiters:', error.message);
-        } else {
-          const waiterMapping: Record<string, string> = {};
-          waiters.forEach((waiter: Waiter) => {
-            waiterMapping[waiter.id] = waiter.name;
-          });
-          setWaitersMap(waiterMapping);
-        }
+      if (error) {
+        console.error('Error fetching waiters:', error.message);
+      } else {
+        const waiterMapping: Record<string, string> = {};
+        waiters.forEach((waiter: Waiter) => {
+          waiterMapping[waiter.id] = waiter.name;
+        });
+        setWaitersMap(waiterMapping);
       }
-    };
+    }
+  };
 
-    const fetchStats = async () => {
-      if (restaurantId) {
-        const { data, error } = await supabase
-          .from('orders')
-          .select('id, total_price, status, table_id, user_id, created_at, tip_amount')
-          .eq('restaurant_id', restaurantId);
+  const fetchStats = async () => {
+    if (restaurantId) {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('id, total_price, status, table_id, user_id, created_at, tip_amount')
+        .eq('restaurant_id', restaurantId);
 
-        if (error) {
-          console.error('Error fetching orders:', error.message);
-        } else {
-          console.log('Fetched Orders Data:', data);
-          const ordersData: Order[] = data as Order[];
-          const revenue = ordersData.reduce((acc, order) => acc + order.total_price, 0);
-          const ordersCount = ordersData.length;
-          const customersCount = new Set(ordersData.map(order => order.user_id)).size;
-          const averageOrderSize = ordersCount ? revenue / ordersCount : 0;
-          const tipAmount = ordersData.reduce((acc, order) => acc + order.tip_amount, 0);
-          const recentOrders = ordersData
-            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-            .slice(0, 5);
+      if (error) {
+        console.error('Error fetching orders:', error.message);
+      } else {
+        const ordersData: Order[] = data as Order[];
+        const revenue = ordersData.reduce((acc, order) => acc + order.total_price, 0);
+        const ordersCount = ordersData.length;
+        const customersCount = new Set(ordersData.map(order => order.user_id)).size;
+        const averageOrderSize = ordersCount ? revenue / ordersCount : 0;
+        const tipAmount = ordersData.reduce((acc, order) => acc + order.tip_amount, 0);
+        const recentOrders = ordersData
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+          .slice(0, 5);
 
-          setRevenue(revenue);
-          setOrdersCount(ordersCount);
-          setCustomersCount(customersCount);
-          setAverageOrderSize(averageOrderSize);
-          setTip(tipAmount);
-          setRecentOrders(recentOrders);
-        }
+        setRevenue(revenue);
+        setOrdersCount(ordersCount);
+        setCustomersCount(customersCount);
+        setAverageOrderSize(averageOrderSize);
+        setTip(tipAmount);
+        setRecentOrders(recentOrders);
       }
-    };
+    }
+  };
 
-    fetchRestaurantName();
+  useEffect(() => {
     fetchTables();
     fetchWaiters();
     fetchStats();
@@ -167,27 +172,37 @@ const Dashboard = () => {
         <div className="today-stats mb-8 text-center">
           <h2 className="text-2xl font-semibold mb-4">Today</h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 justify-center">
-            <div className="stat-item p-6 bg-gray-100 rounded shadow flex items-center justify-center space-x-4">
-              <i className="fas fa-dollar-sign text-2xl"></i>
-              <span>Revenue: CA${revenue.toFixed(2)}</span>
-            </div>
-            <div className="stat-item p-6 bg-gray-100 rounded shadow flex items-center justify-center space-x-4">
-              <i className="fas fa-shopping-cart text-2xl"></i>
-              <span>Orders: {ordersCount}</span>
-            </div>
-            <div className="stat-item p-6 bg-gray-100 rounded shadow flex items-center justify-center space-x-4">
-              <i className="fas fa-shopping-bag text-2xl"></i>
-              <span>Average Order Size: CA${averageOrderSize.toFixed(2)}</span>
-            </div>
-            <div className="stat-item p-6 bg-gray-100 rounded shadow flex items-center justify-center space-x-4">
-              <i className="fas fa-hand-holding-usd text-2xl"></i>
-              <span>Tip: CA${tip.toFixed(2)}</span>
-            </div>
+            {['revenue', 'ordersCount', 'averageOrderSize', 'tip'].map((key, index) => (
+              <div
+                key={index}
+                className={`stat-item p-6 rounded shadow flex items-center justify-center space-x-4 ${
+                  pricingTier === 'Basic' ? 'bg-gray-200 opacity-50 relative' : 'bg-gray-100'
+                }`}
+              >
+                {pricingTier === 'Basic' && (
+                  <i className="fas fa-lock text-gray-500 text-xl absolute top-2 right-2"></i>
+                )}
+                <i className="fas fa-dollar-sign text-2xl"></i>
+                <span>
+                  {key === 'revenue' && `Revenue: CA$${revenue.toFixed(2)}`}
+                  {key === 'ordersCount' && `Orders: ${ordersCount}`}
+                  {key === 'averageOrderSize' && `Avg Order: CA$${averageOrderSize.toFixed(2)}`}
+                  {key === 'tip' && `Tip: CA$${tip.toFixed(2)}`}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
 
-        <div className="recent-orders text-center">
+        <div
+          className={`recent-orders text-center ${
+            pricingTier === 'Basic' ? 'opacity-50 relative' : ''
+          }`}
+        >
           <h2 className="text-2xl font-semibold mb-4">Recent Orders</h2>
+          {pricingTier === 'Basic' && (
+            <i className="fas fa-lock text-gray-500 text-2xl absolute top-8 right-8"></i>
+          )}
           <table className="orders-table w-full bg-white rounded shadow mx-auto">
             <thead>
               <tr className="bg-gray-100">

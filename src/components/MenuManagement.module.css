@@ -46,3 +46,28 @@
   color: #666;
   margin-top: 0.5rem;
 }
+.comingSoon {
+  background: #e0e0e0; /* Gray background to indicate disabled state */
+  color: #888; /* Faded text color */
+  cursor: not-allowed; /* Disable hover and click interactions */
+  box-shadow: none;
+  transition: none; /* Remove hover transition */
+  position: relative;
+}
+
+.comingSoon .menuTitle {
+  color: #444; /* Darker title for contrast */
+}
+
+.comingSoon .description {
+  font-weight: bold;
+  color: #555; /* Faded color for "Coming Soon!" */
+}
+
+.comingSoon:hover {
+  transform: none; /* Remove hover transform effect */
+}
+
+.comingSoon i {
+  color: #aaa; /* Faded icon color */
+}

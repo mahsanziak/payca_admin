@@ -1,189 +1,209 @@
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
-import { supabase } from '../../../utils/supabaseClient';
-import IconButton from '@mui/material/IconButton';
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
-import SaveIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import styles from '../../../components/Menus.module.css'; // Adjust the import path if needed
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import { supabase } from "../../../utils/supabaseClient";
+import IconButton from "@mui/material/IconButton";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import SaveIcon from "@mui/icons-material/CheckCircle";
+import CancelIcon from "@mui/icons-material/Cancel";
+import styles from "../../../components/Menus.module.css";
 
 const MenusPage = () => {
   const router = useRouter();
   const { restaurantId } = router.query;
 
   const [menus, setMenus] = useState<any[]>([]);
-  const [selectedMenu, setSelectedMenu] = useState<any | null>(null);
+  const [menuCategories, setMenuCategories] = useState<any[]>([]);
   const [menuItems, setMenuItems] = useState<any[]>([]);
-  const [editingItemId, setEditingItemId] = useState<string | null>(null);
-  const [newItem, setNewItem] = useState({ name: '', description: '', price: '', category_id: '', image_url: '' });
-  const [categories, setCategories] = useState<any[]>([]);
 
+  const [selectedMenu, setSelectedMenu] = useState<any | null>(null);
+  const [newMenu, setNewMenu] = useState({ name: "" });
+  const [newCategory, setNewCategory] = useState({ name: "" });
+  const [newItem, setNewItem] = useState({
+    name: "",
+    description: "",
+    price: "",
+    category_id: "",
+    image_url: "",
+  });
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingType, setEditingType] = useState<"menu" | "category" | "item">(
+    null
+  );
+
+  // Fetch menus
   useEffect(() => {
-    const fetchMenus = async () => {
-      if (restaurantId) {
-        const { data, error } = await supabase
-          .from('menus')
-          .select('*')
-          .eq('restaurant_id', restaurantId);
-
-        if (error) {
-          console.error('Error fetching menus:', error.message);
-        } else {
-          setMenus(data);
-        }
-      }
-    };
-
-    fetchMenus();
+    if (restaurantId) {
+      fetchMenus();
+    }
   }, [restaurantId]);
 
-  const fetchMenuItems = async (menuId: string) => {
+  const fetchMenus = async () => {
     const { data, error } = await supabase
-      .from('menu_items')
-      .select('*')
-      .eq('menu_id', menuId);
+      .from("menus")
+      .select("*")
+      .eq("restaurant_id", restaurantId);
 
-    if (error) {
-      console.error('Error fetching menu items:', error.message);
-    } else {
-      setMenuItems(data || []);
-    }
+    if (error) console.error("Error fetching menus:", error.message);
+    else setMenus(data);
   };
 
   const fetchCategories = async (menuId: string) => {
     const { data, error } = await supabase
-      .from('menu_categories')
-      .select('*')
-      .eq('menu_id', menuId);
+      .from("menu_categories")
+      .select("*")
+      .eq("menu_id", menuId);
 
-    if (error) {
-      console.error('Error fetching categories:', error.message);
-    } else {
-      setCategories(data || []);
-    }
+    if (error) console.error("Error fetching categories:", error.message);
+    else setMenuCategories(data);
   };
 
+  const fetchMenuItems = async (menuId: string) => {
+    const { data, error } = await supabase
+      .from("menu_items")
+      .select("*")
+      .eq("menu_id", menuId);
+
+    if (error) console.error("Error fetching items:", error.message);
+    else setMenuItems(data);
+  };
+
+  // Handle menu selection
   const handleMenuClick = (menu: any) => {
     setSelectedMenu(menu);
-    fetchMenuItems(menu.id);
     fetchCategories(menu.id);
+    fetchMenuItems(menu.id);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>, itemId: string | null = null) => {
+  // Add a new menu
+  const addNewMenu = async () => {
+    const { data, error } = await supabase
+      .from("menus")
+      .insert([{ name: newMenu.name, restaurant_id: restaurantId }])
+      .select()
+      .single();
+
+    if (error) console.error("Error creating menu:", error.message);
+    else {
+      setMenus([...menus, data]);
+      setNewMenu({ name: "" });
+    }
+  };
+
+  // Add a new category
+  const addNewCategory = async () => {
+    const { data, error } = await supabase
+      .from("menu_categories")
+      .insert([{ name: newCategory.name, menu_id: selectedMenu.id }])
+      .select()
+      .single();
+
+    if (error) console.error("Error creating category:", error.message);
+    else {
+      setMenuCategories([...menuCategories, data]);
+      setNewCategory({ name: "" });
+    }
+  };
+
+  // Add a new item
+  const addNewItem = async () => {
+    const { data, error } = await supabase
+      .from("menu_items")
+      .insert([
+        {
+          ...newItem,
+          menu_id: selectedMenu.id,
+          price: parseFloat(newItem.price),
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) console.error("Error creating item:", error.message);
+    else {
+      setMenuItems([...menuItems, data]);
+      setNewItem({
+        name: "",
+        description: "",
+        price: "",
+        category_id: "",
+        image_url: "",
+      });
+    }
+  };
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+  
+    const reader = new FileReader();
+  
+    reader.onload = () => {
+      if (reader.result) {
+        setNewItem((prev) => ({ ...prev, image_url: reader.result as string }));
+      }
+    };
+  
+    reader.onerror = (error) => {
+      console.error("Error reading image file:", error);
+    };
+  
+    reader.readAsDataURL(file);
+  };
+  
+  
+
+
+
+
+
+  const handleInputChange = (
+    e,
+    setState,
+    key,
+    isObject = true
+  ) => {
     const { name, value } = e.target;
-    if (itemId) {
-      setMenuItems(menuItems.map(item => (item.id === itemId ? { ...item, [name]: value } : item)));
+    if (isObject) {
+      setState((prev) => ({ ...prev, [name]: value }));
     } else {
-      setNewItem({ ...newItem, [name]: value });
+      setState(value);
     }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>, itemId: string | null = null) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (itemId) {
-          setMenuItems(menuItems.map(item => 
-            item.id === itemId ? { ...item, image_url: reader.result } : item
-          ));
-        } else {
-          setNewItem({ ...newItem, image_url: reader.result });
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const saveChanges = async (itemId: string) => {
-    const itemToUpdate = menuItems.find(item => item.id === itemId);
-    const { error } = await supabase
-      .from('menu_items')
-      .update(itemToUpdate)
-      .eq('id', itemId);
+  const deleteEntity = async (id, table, stateSetter, state) => {
+    const { error } = await supabase.from(table).delete().eq("id", id);
 
     if (error) {
-      console.error('Error updating menu item:', error.message);
+      console.error(`Error deleting ${table}:`, error.message);
     } else {
-      setEditingItemId(null);
+      const updatedState = state.filter((item) => item.id !== id);
+      stateSetter(updatedState);
     }
   };
 
-  const addItem = async () => {
-    const { name, description, price, category_id, image_url } = newItem;
-    if (name && description && price && category_id) {
-      const { data, error } = await supabase
-        .from('menu_items')
-        .insert([{ name, description, price: parseFloat(price), category_id, image_url, menu_id: selectedMenu.id }])
-        .single();
-
-      if (error) {
-        console.error('Error adding menu item:', error.message);
-      } else {
-        setMenuItems([...menuItems, data]);
-        setNewItem({ name: '', description: '', price: '', category_id: '', image_url: '' });
-      }
-    } else {
-      alert('Please fill out all fields');
-    }
-  };
-
-  const startEditingItem = (itemId: string) => {
-    setEditingItemId(itemId);
-  };
-
-  const cancelEditing = () => {
-    setEditingItemId(null);
-  };
-
-  const deleteMenuItem = async (itemId: string) => {
-    const { error } = await supabase
-      .from('menu_items')
-      .delete()
-      .eq('id', itemId);
+  const saveChanges = async (entity, table, stateSetter, state) => {
+    const { error } = await supabase.from(table).update(entity).eq("id", entity.id);
 
     if (error) {
-      console.error('Error deleting menu item:', error.message);
+      console.error(`Error updating ${table}:`, error.message);
     } else {
-      setMenuItems(menuItems.filter(item => item.id !== itemId));
-    }
-  };
-
-  const onDragEnd = async (result) => {
-    const { destination, source, draggableId } = result;
-
-    if (!destination) return;
-
-    const movedItem = menuItems.find(item => item.id === draggableId);
-    if (movedItem && destination.droppableId) {
-      const updatedItem = { ...movedItem, category_id: destination.droppableId };
-
-      // Update in state
-      const updatedMenuItems = menuItems.map(item => 
-        item.id === draggableId ? updatedItem : item
-      );
-
-      setMenuItems(updatedMenuItems);
-
-      // Update in database
-      const { error } = await supabase
-        .from('menu_items')
-        .update({ category_id: destination.droppableId })
-        .eq('id', draggableId);
-
-      if (error) {
-        console.error('Error updating menu item category:', error.message);
-      }
+      const updatedState = state.map((item) => (item.id === entity.id ? entity : item));
+      stateSetter(updatedState);
+      setEditingId(null);
+      setEditingType(null);
     }
   };
 
   return (
     <div className={styles.inventoryManagement}>
-      <h1 className={styles.settingsTitle}>My Menus</h1>
+      <h1 className={styles.settingsTitle}>Manage Menus</h1>
+
+      {/* Menu Selection */}
       <div className={styles.itemForm}>
+        <label htmlFor="menuSelect">Select a Menu:</label>
         <select
+          id="menuSelect"
           className={styles.inputField}
           onChange={(e) => {
             const menu = menus.find((m) => m.id === e.target.value);
@@ -197,178 +217,200 @@ const MenusPage = () => {
             </option>
           ))}
         </select>
+
+        <div>
+          <input
+            type="text"
+            name="name"
+            placeholder="New Menu Name"
+            value={newMenu.name}
+            className={styles.inputField}
+            onChange={(e) => handleInputChange(e, setNewMenu)}
+          />
+          <button className={styles.addButton} onClick={addNewMenu}>
+            Add Menu
+          </button>
+        </div>
       </div>
 
       {selectedMenu && (
         <>
-          <div className={styles.addItemForm}>
-            <h2 className={styles.addItemTitle}>Add New Menu Item</h2>
-            <div className={styles.formRow}>
+          {/* Categories */}
+          <h2 className={styles.sectionTitle}>Categories</h2>
+          <div>
+            {menuCategories.map((category) => (
+              <div key={category.id} className={styles.categoryItem}>
+                {editingId === category.id && editingType === "category" ? (
+                  <>
+                    <input
+                      type="text"
+                      name="name"
+                      value={category.name}
+                      className={styles.inputField}
+                      onChange={(e) =>
+                        handleInputChange(e, (name) => {
+                          const updatedCategory = { ...category, name };
+                          saveChanges(updatedCategory, "menu_categories", setMenuCategories, menuCategories);
+                        })
+                      }
+                    />
+                    <IconButton
+                      onClick={() =>
+                        saveChanges(category, "menu_categories", setMenuCategories, menuCategories)
+                      }
+                    >
+                      <SaveIcon />
+                    </IconButton>
+                    <IconButton onClick={() => setEditingId(null)}>
+                      <CancelIcon />
+                    </IconButton>
+                  </>
+                ) : (
+                  <>
+                    <span>{category.name}</span>
+                    <IconButton
+                      onClick={() => {
+                        setEditingId(category.id);
+                        setEditingType("category");
+                      }}
+                    >
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton
+                      onClick={() =>
+                        deleteEntity(category.id, "menu_categories", setMenuCategories, menuCategories)
+                      }
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </>
+                )}
+              </div>
+            ))}
+
+            <div>
               <input
                 type="text"
                 name="name"
-                placeholder="Item Name"
+                placeholder="New Category Name"
+                value={newCategory.name}
                 className={styles.inputField}
-                value={newItem.name}
-                onChange={(e) => handleInputChange(e)}
+                onChange={(e) => handleInputChange(e, setNewCategory)}
               />
-              <textarea
-                name="description"
-                placeholder="Description"
-                className={styles.inputField}
-                value={newItem.description}
-                onChange={(e) => handleInputChange(e)}
-              />
-              <input
-                type="number"
-                name="price"
-                placeholder="Price"
-                className={styles.inputField}
-                value={newItem.price}
-                onChange={(e) => handleInputChange(e)}
-              />
-              <select
-                name="category_id"
-                className={styles.inputField}
-                value={newItem.category_id}
-                onChange={(e) => handleInputChange(e)}
-              >
-                <option value="">Select Category</option>
-                {categories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleImageChange(e)}
-              />
-              <button onClick={addItem} className={styles.addButton}>
-                Add Item
+              <button className={styles.addButton} onClick={addNewCategory}>
+                Add Category
               </button>
             </div>
           </div>
 
-          <DragDropContext onDragEnd={onDragEnd}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Description</th>
-                  <th>Price</th>
-                  <th>Image</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              {categories.map((category) => (
-                <Droppable droppableId={category.id} key={category.id}>
-                  {(provided) => (
-                    <tbody
-                      {...provided.droppableProps}
-                      ref={provided.innerRef}
-                    >
-                      <tr>
-                        <td colSpan={5} className={styles.categoryRow}>
-                          {category.name}
-                        </td>
-                      </tr>
-                      {menuItems
-                        .filter(item => item && item.category_id === category.id)
-                        .map((item, index) => (
-                          <Draggable key={item.id} draggableId={item.id} index={index}>
-                            {(provided) => (
-                              <tr
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                              >
-                                <td>
-                                  {editingItemId === item.id ? (
-                                    <input
-                                      type="text"
-                                      name="name"
-                                      className={styles.inputField}
-                                      value={item.name}
-                                      onChange={(e) => handleInputChange(e, item.id)}
-                                    />
-                                  ) : (
-                                    item.name
-                                  )}
-                                </td>
-                                <td>
-                                  {editingItemId === item.id ? (
-                                    <textarea
-                                      name="description"
-                                      className={styles.inputField}
-                                      value={item.description}
-                                      onChange={(e) => handleInputChange(e, item.id)}
-                                    />
-                                  ) : (
-                                    item.description
-                                  )}
-                                </td>
-                                <td>
-                                  {editingItemId === item.id ? (
-                                    <input
-                                      type="number"
-                                      name="price"
-                                      className={styles.inputField}
-                                      value={item.price}
-                                      onChange={(e) => handleInputChange(e, item.id)}
-                                    />
-                                  ) : (
-                                    `$${item.price.toFixed(2)}`
-                                  )}
-                                </td>
-                                <td>
-                                  {editingItemId === item.id ? (
-                                    <input
-                                      type="file"
-                                      accept="image/*"
-                                      onChange={(e) => handleImageChange(e, item.id)}
-                                    />
-                                  ) : (
-                                    item.image_url ? (
-                                      <img src={item.image_url} alt={item.name} className={styles.imagePreview} />
-                                    ) : (
-                                      'No image'
-                                    )
-                                  )}
-                                </td>
-                                <td>
-                                  {editingItemId === item.id ? (
-                                    <>
-                                      <IconButton onClick={() => saveChanges(item.id)}>
-                                        <SaveIcon style={{ fontSize: '1.5rem', color: 'green' }} />
-                                      </IconButton>
-                                      <IconButton onClick={cancelEditing}>
-                                        <CancelIcon style={{ fontSize: '1.5rem', color: 'red' }} />
-                                      </IconButton>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <IconButton onClick={() => startEditingItem(item.id)}>
-                                        <EditIcon style={{ fontSize: '1.5rem', color: 'orange' }} />
-                                      </IconButton>
-                                      <IconButton onClick={() => deleteMenuItem(item.id)}>
-                                        <DeleteIcon style={{ fontSize: '1.5rem', color: 'red' }} />
-                                      </IconButton>
-                                    </>
-                                  )}
-                                </td>
-                              </tr>
-                            )}
-                          </Draggable>
-                        ))}
-                      {provided.placeholder}
-                    </tbody>
-                  )}
-                </Droppable>
-              ))}
-            </table>
-          </DragDropContext>
+          {/* Menu Items */}
+          <h2 className={styles.sectionTitle}>Menu Items</h2>
+          {menuItems.map((item) => (
+            <div key={item.id} className={styles.menuItem}>
+              {editingId === item.id && editingType === "item" ? (
+                <>
+                  <input
+                    type="text"
+                    name="name"
+                    value={item.name}
+                    className={styles.inputField}
+                    onChange={(e) =>
+                      handleInputChange(e, (name) => {
+                        const updatedItem = { ...item, name };
+                        saveChanges(updatedItem, "menu_items", setMenuItems, menuItems);
+                      })
+                    }
+                  />
+                  <IconButton onClick={() => saveChanges(item, "menu_items", setMenuItems, menuItems)}>
+                    <SaveIcon />
+                  </IconButton>
+                  <IconButton onClick={() => setEditingId(null)}>
+                    <CancelIcon />
+                  </IconButton>
+                </>
+              ) : (
+                <>
+                  <span>{item.name}</span>
+                  <IconButton
+                    onClick={() => {
+                      setEditingId(item.id);
+                      setEditingType("item");
+                    }}
+                  >
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton
+                    onClick={() => deleteEntity(item.id, "menu_items", setMenuItems, menuItems)}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </>
+              )}
+            </div>
+          ))}
+
+<div>
+  <h2 className={styles.sectionTitle}>Add New Menu Item</h2>
+  <div>
+  <input
+    type="text"
+    name="name"
+    placeholder="New Item Name"
+    value={newItem.name}
+    className={styles.inputField}
+    onChange={(e) => handleInputChange(e, setNewItem)}
+  />
+  <textarea
+    name="description"
+    placeholder="Item Description"
+    value={newItem.description}
+    className={styles.inputField}
+    onChange={(e) => handleInputChange(e, setNewItem)}
+  ></textarea>
+  <input
+    type="number"
+    name="price"
+    placeholder="Item Price"
+    value={newItem.price}
+    className={styles.inputField}
+    onChange={(e) => handleInputChange(e, setNewItem)}
+  />
+  <select
+    name="category_id"
+    value={newItem.category_id}
+    className={styles.inputField}
+    onChange={(e) => handleInputChange(e, setNewItem)}
+  >
+    <option value="">Select Category</option>
+    {menuCategories.map((category) => (
+      <option key={category.id} value={category.id}>
+        {category.name}
+      </option>
+    ))}
+  </select>
+  <input
+    type="file"
+    accept="image/*"
+    onChange={handleImageChange}
+    className={styles.inputField}
+  />
+  <button className={styles.addButton} onClick={addNewItem}>
+    Add Item
+  </button>
+</div>
+
+  {newItem.image_url && (
+    <div>
+      <h3 className={styles.previewTitle}>Image Preview</h3>
+      <img
+        src={newItem.image_url}
+        alt="Preview"
+        className={styles.imagePreview}
+      />
+    </div>
+  )}
+</div>
+
         </>
       )}
     </div>
