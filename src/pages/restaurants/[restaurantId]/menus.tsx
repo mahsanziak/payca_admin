@@ -32,6 +32,9 @@ const MenusPage = () => {
     null
   );
 
+  // New state for success message
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
   // Fetch menus
   useEffect(() => {
     if (restaurantId) {
@@ -108,6 +111,11 @@ const MenusPage = () => {
 
   // Add a new item
   const addNewItem = async () => {
+    if (!newItem.name || !newItem.description || !newItem.price || !newItem.category_id) {
+      alert("Please fill in all fields.");
+      return;
+    }
+
     const { data, error } = await supabase
       .from("menu_items")
       .insert([
@@ -120,8 +128,9 @@ const MenusPage = () => {
       .select()
       .single();
 
-    if (error) console.error("Error creating item:", error.message);
-    else {
+    if (error) {
+      console.error("Error creating item:", error.message);
+    } else {
       setMenuItems([...menuItems, data]);
       setNewItem({
         name: "",
@@ -130,45 +139,40 @@ const MenusPage = () => {
         category_id: "",
         image_url: "",
       });
+      // Set success message
+      setSuccessMessage("Item added successfully!");
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccessMessage(null);
+      }, 3000);
     }
   };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-  
+
     const reader = new FileReader();
-  
+
     reader.onload = () => {
       if (reader.result) {
         setNewItem((prev) => ({ ...prev, image_url: reader.result as string }));
       }
     };
-  
+
     reader.onerror = (error) => {
       console.error("Error reading image file:", error);
     };
-  
+
     reader.readAsDataURL(file);
   };
-  
-  
-
-
-
-
 
   const handleInputChange = (
-    e,
-    setState,
-    key,
-    isObject = true
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+    stateSetter: React.Dispatch<React.SetStateAction<any>>,
   ) => {
     const { name, value } = e.target;
-    if (isObject) {
-      setState((prev) => ({ ...prev, [name]: value }));
-    } else {
-      setState(value);
-    }
+    stateSetter((prev) => ({ ...prev, [name]: value }));
   };
 
   const deleteEntity = async (id, table, stateSetter, state) => {
@@ -190,14 +194,15 @@ const MenusPage = () => {
     } else {
       const updatedState = state.map((item) => (item.id === entity.id ? entity : item));
       stateSetter(updatedState);
-      setEditingId(null);
-      setEditingType(null);
     }
   };
 
   return (
     <div className={styles.inventoryManagement}>
       <h1 className={styles.settingsTitle}>Manage Menus</h1>
+
+      {/* Display success message */}
+      {successMessage && <div className={styles.successMessage}>{successMessage}</div>}
 
       {/* Menu Selection */}
       <div className={styles.itemForm}>
@@ -254,37 +259,105 @@ const MenusPage = () => {
                         })
                       }
                     />
-                    <IconButton
-                      onClick={() =>
-                        saveChanges(category, "menu_categories", setMenuCategories, menuCategories)
-                      }
-                    >
-                      <SaveIcon />
-                    </IconButton>
-                    <IconButton onClick={() => setEditingId(null)}>
-                      <CancelIcon />
-                    </IconButton>
+                    <div className={styles.buttonGroup}>
+                      <IconButton
+                        onClick={() =>
+                          saveChanges(category, "menu_categories", setMenuCategories, menuCategories)
+                        }
+                      >
+                        <SaveIcon />
+                      </IconButton>
+                      <IconButton onClick={() => setEditingId(null)}>
+                        <CancelIcon />
+                      </IconButton>
+                    </div>
                   </>
                 ) : (
                   <>
                     <span>{category.name}</span>
-                    <IconButton
-                      onClick={() => {
-                        setEditingId(category.id);
-                        setEditingType("category");
-                      }}
-                    >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      onClick={() =>
-                        deleteEntity(category.id, "menu_categories", setMenuCategories, menuCategories)
-                      }
-                    >
-                      <DeleteIcon />
-                    </IconButton>
+                    <div className={styles.buttonGroup}>
+                      <IconButton
+                        onClick={() => {
+                          setEditingId(category.id);
+                          setEditingType("category");
+                        }}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton
+                        onClick={() =>
+                          deleteEntity(category.id, "menu_categories", setMenuCategories, menuCategories)
+                        }
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </div>
                   </>
                 )}
+                {/* Display Menu Items under the Category */}
+                {menuItems.filter(item => item.category_id === category.id).map(item => (
+                  <div key={item.id} className={styles.menuItem}>
+                    <img src={item.image_url} alt={item.name} className={styles.imagePreview} />
+                    {editingId === item.id ? (
+                      <>
+                        <input
+                          type="text"
+                          name="name"
+                          value={item.name}
+                          className={styles.inputField}
+                          onChange={(e) => handleInputChange(e, setMenuItems, item.id, false)}
+                        />
+                        <textarea
+                          name="description"
+                          value={item.description}
+                          className={styles.inputField}
+                          onChange={(e) => handleInputChange(e, setMenuItems, item.id, false)}
+                        />
+                        <input
+                          type="number"
+                          name="price"
+                          value={item.price}
+                          className={styles.inputField}
+                          onChange={(e) => handleInputChange(e, setMenuItems, item.id, false)}
+                        />
+                        <div className={styles.buttonGroup}>
+                          <IconButton
+                            onClick={() => {
+                              saveChanges(item, "menu_items", setMenuItems, menuItems);
+                              setEditingId(null); // Reset editing state
+                            }}
+                          >
+                            <SaveIcon />
+                          </IconButton>
+                          <IconButton onClick={() => setEditingId(null)}>
+                            <CancelIcon />
+                          </IconButton>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <span className={styles.itemName}>{item.name}</span>
+                        <span className={styles.itemDescription}>{item.description}</span>
+                        <span className={styles.itemPrice}>${item.price.toFixed(2)}</span>
+                        <div className={styles.buttonGroup}>
+                          <IconButton
+                            onClick={() => {
+                              setEditingId(item.id);
+                              setEditingType("item");
+                            }}
+                          >
+                            <EditIcon />
+                          </IconButton>
+                          <IconButton
+                            onClick={() => deleteEntity(item.id, "menu_items", setMenuItems, menuItems)}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
               </div>
             ))}
 
@@ -303,114 +376,69 @@ const MenusPage = () => {
             </div>
           </div>
 
-          {/* Menu Items */}
-          <h2 className={styles.sectionTitle}>Menu Items</h2>
-          {menuItems.map((item) => (
-            <div key={item.id} className={styles.menuItem}>
-              {editingId === item.id && editingType === "item" ? (
-                <>
-                  <input
-                    type="text"
-                    name="name"
-                    value={item.name}
-                    className={styles.inputField}
-                    onChange={(e) =>
-                      handleInputChange(e, (name) => {
-                        const updatedItem = { ...item, name };
-                        saveChanges(updatedItem, "menu_items", setMenuItems, menuItems);
-                      })
-                    }
-                  />
-                  <IconButton onClick={() => saveChanges(item, "menu_items", setMenuItems, menuItems)}>
-                    <SaveIcon />
-                  </IconButton>
-                  <IconButton onClick={() => setEditingId(null)}>
-                    <CancelIcon />
-                  </IconButton>
-                </>
-              ) : (
-                <>
-                  <span>{item.name}</span>
-                  <IconButton
-                    onClick={() => {
-                      setEditingId(item.id);
-                      setEditingType("item");
-                    }}
-                  >
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton
-                    onClick={() => deleteEntity(item.id, "menu_items", setMenuItems, menuItems)}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </>
-              )}
+          {/* Add New Menu Item Section */}
+          <div>
+            <h2 className={styles.sectionTitle}>Add New Menu Item</h2>
+            <div className={styles.addItemContainer}>
+              <input
+                type="text"
+                name="name"
+                placeholder="New Item Name"
+                value={newItem.name}
+                className={styles.inputField}
+                onChange={(e) => handleInputChange(e, setNewItem)}
+              />
+              <textarea
+                name="description"
+                placeholder="Item Description"
+                value={newItem.description}
+                className={styles.inputField}
+                onChange={(e) => handleInputChange(e, setNewItem)}
+                rows={1}
+              ></textarea>
+              <input
+                type="number"
+                name="price"
+                placeholder="Item Price"
+                value={newItem.price}
+                className={styles.inputField}
+                onChange={(e) => handleInputChange(e, setNewItem)}
+              />
+              <select
+                name="category_id"
+                value={newItem.category_id}
+                className={styles.inputField}
+                onChange={(e) => handleInputChange(e, setNewItem)}
+              >
+                <option value="">Select Category</option>
+                {menuCategories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className={styles.inputField}
+              />
+              <button className={styles.addButton} onClick={addNewItem}>
+                Add Item
+              </button>
             </div>
-          ))}
 
-<div>
-  <h2 className={styles.sectionTitle}>Add New Menu Item</h2>
-  <div>
-  <input
-    type="text"
-    name="name"
-    placeholder="New Item Name"
-    value={newItem.name}
-    className={styles.inputField}
-    onChange={(e) => handleInputChange(e, setNewItem)}
-  />
-  <textarea
-    name="description"
-    placeholder="Item Description"
-    value={newItem.description}
-    className={styles.inputField}
-    onChange={(e) => handleInputChange(e, setNewItem)}
-  ></textarea>
-  <input
-    type="number"
-    name="price"
-    placeholder="Item Price"
-    value={newItem.price}
-    className={styles.inputField}
-    onChange={(e) => handleInputChange(e, setNewItem)}
-  />
-  <select
-    name="category_id"
-    value={newItem.category_id}
-    className={styles.inputField}
-    onChange={(e) => handleInputChange(e, setNewItem)}
-  >
-    <option value="">Select Category</option>
-    {menuCategories.map((category) => (
-      <option key={category.id} value={category.id}>
-        {category.name}
-      </option>
-    ))}
-  </select>
-  <input
-    type="file"
-    accept="image/*"
-    onChange={handleImageChange}
-    className={styles.inputField}
-  />
-  <button className={styles.addButton} onClick={addNewItem}>
-    Add Item
-  </button>
-</div>
-
-  {newItem.image_url && (
-    <div>
-      <h3 className={styles.previewTitle}>Image Preview</h3>
-      <img
-        src={newItem.image_url}
-        alt="Preview"
-        className={styles.imagePreview}
-      />
-    </div>
-  )}
-</div>
-
+            {newItem.image_url && (
+              <div>
+                <h3 className={styles.previewTitle}>Image Preview</h3>
+                <img
+                  src={newItem.image_url}
+                  alt="Preview"
+                  className={styles.imagePreview}
+                />
+              </div>
+            )}
+          </div>
         </>
       )}
     </div>
@@ -418,3 +446,4 @@ const MenusPage = () => {
 };
 
 export default MenusPage;
+
