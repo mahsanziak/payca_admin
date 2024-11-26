@@ -67,10 +67,15 @@ const MenusPage = () => {
       .from("menu_items")
       .select("*")
       .eq("menu_id", menuId);
-
-    if (error) console.error("Error fetching items:", error.message);
-    else setMenuItems(data);
+  
+    if (error) {
+      console.error("Error fetching items:", error.message);
+      setMenuItems([]); // Ensure menuItems is reset to an empty array on error
+    } else {
+      setMenuItems(data || []); // Ensure data is always set to an array
+    }
   };
+  
 
   // Handle menu selection
   const handleMenuClick = (menu: any) => {
@@ -83,16 +88,17 @@ const MenusPage = () => {
   const addNewMenu = async () => {
     const { data, error } = await supabase
       .from("menus")
-      .insert([{ name: newMenu.name, restaurant_id: restaurantId }])
+      .insert([{ name: newMenu.name, restaurant_id: restaurantId, enabled: false }])
       .select()
       .single();
-
+  
     if (error) console.error("Error creating menu:", error.message);
     else {
       setMenus([...menus, data]);
       setNewMenu({ name: "" });
     }
   };
+  
 
   // Add a new category
   const addNewCategory = async () => {
@@ -167,9 +173,49 @@ const MenusPage = () => {
     reader.readAsDataURL(file);
   };
 
+  const toggleMenuEnabled = async (menuId: string) => {
+    try {
+      // Disable all other menus for the restaurant first
+      const { error: disableError } = await supabase
+        .from("menus")
+        .update({ enabled: false })
+        .eq("restaurant_id", restaurantId);
+  
+      if (disableError) {
+        console.error("Error disabling other menus:", disableError.message);
+        return;
+      }
+  
+      // Enable the selected menu
+      const { data, error } = await supabase
+        .from("menus")
+        .update({ enabled: true })
+        .eq("id", menuId)
+        .select()
+        .single();
+  
+      if (error) {
+        console.error("Error enabling menu:", error.message);
+      } else {
+        // Update the local state for selectedMenu
+        setSelectedMenu(data);
+  
+        // Update menus list to reflect the changes
+        setMenus((prevMenus) =>
+          prevMenus.map((menu) =>
+            menu.id === menuId ? { ...menu, enabled: true } : { ...menu, enabled: false }
+          )
+        );
+      }
+    } catch (err) {
+      console.error("Error toggling menu enabled state:", err);
+    }
+  };
+  
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
-    stateSetter: React.Dispatch<React.SetStateAction<any>>,
+    stateSetter: React.Dispatch<React.SetStateAction<any>>
   ) => {
     const { name, value } = e.target;
     stateSetter((prev) => ({ ...prev, [name]: value }));
@@ -192,7 +238,9 @@ const MenusPage = () => {
     if (error) {
       console.error(`Error updating ${table}:`, error.message);
     } else {
-      const updatedState = state.map((item) => (item.id === entity.id ? entity : item));
+      const updatedState = state.map((item) =>
+        item.id === entity.id ? entity : item
+      );
       stateSetter(updatedState);
     }
   };
@@ -240,6 +288,18 @@ const MenusPage = () => {
 
       {selectedMenu && (
         <>
+            {/* Enable Menu Toggle */}
+    <div className={styles.toggleContainer}>
+      <label htmlFor="menuEnabledToggle" className={styles.toggleLabel}>
+        <input
+          type="checkbox"
+          id="menuEnabledToggle"
+          checked={selectedMenu.enabled}
+          onChange={() => toggleMenuEnabled(selectedMenu.id)}
+        />
+        Enable this menu
+      </label>
+    </div>
           {/* Categories */}
           <h2 className={styles.sectionTitle}>Categories</h2>
           <div>
@@ -249,7 +309,7 @@ const MenusPage = () => {
                   <>
                     <input
                       type="text"
-                      name="name"
+                      name="name" 
                       value={category.name}
                       className={styles.inputField}
                       onChange={(e) =>
