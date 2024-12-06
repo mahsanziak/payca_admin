@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/router';
-import { supabase } from '../utils/supabaseClient';
-import styles from './Sidebar.module.css'; // Import the CSS module
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import { supabase } from "../utils/supabaseClient";
+import styles from "./Sidebar.module.css"; // Import the CSS module
 
 interface SidebarProps {
   isOpen: boolean;
@@ -12,25 +12,33 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const router = useRouter();
   const { restaurantId } = router.query;
-  const [restaurantName, setRestaurantName] = useState<string>('');
-  const [restaurantLocation, setRestaurantLocation] = useState<string>('');
-  const [pricingTier, setPricingTier] = useState<string>(''); // Add state for pricing tier
+
+  const [restaurantName, setRestaurantName] = useState<string>("");
+  const [restaurantLocation, setRestaurantLocation] = useState<string>("");
+  const [pricingTier, setPricingTier] = useState<string>("");
+
+  const lockedSections = [
+    "reports",
+    "recommendations",
+    "inventory-dashboard",
+    "staff-management",
+  ];
 
   useEffect(() => {
     const fetchRestaurantDetails = async () => {
       if (restaurantId) {
         const { data, error } = await supabase
-          .from('restaurants')
-          .select('name, address, pricing_tier')
-          .eq('id', restaurantId)
+          .from("restaurants")
+          .select("name, address, pricing_tier")
+          .eq("id", restaurantId)
           .single();
 
         if (data) {
           setRestaurantName(data.name);
           setRestaurantLocation(data.address);
-          setPricingTier(data.pricing_tier); // Set the pricing tier
-        } else {
-          console.error('Error fetching restaurant details:', error.message);
+          setPricingTier(data.pricing_tier);
+        } else if (error) {
+          console.error("Error fetching restaurant details:", error.message);
         }
       }
     };
@@ -38,29 +46,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
     fetchRestaurantDetails();
   }, [restaurantId]);
 
-  useEffect(() => {
-    // Restrict access based on pricing tier
-    const restrictedPaths = [
-      '/reports',
-      '/recommendations',
-      '/orders',
-      '/inventory-dashboard',
-      '/staff-management',
-      '/feedbacks',
-    ];
-
-    if (pricingTier === 'Basic') {
-      const currentPath = router.asPath.split('/').pop(); // Get current route name
-      if (restrictedPaths.includes(`/${currentPath}`)) {
-        router.push(`/restaurants/${restaurantId}/dashboard`); // Redirect to dashboard
-      }
-    }
-  }, [pricingTier, restaurantId, router]);
+  const isLocked = (section: string) => pricingTier === "Basic" && lockedSections.includes(section);
 
   return (
     <div className="relative">
       <div
-        className={`${styles.sidebar} ${!isOpen ? styles.sidebarMinimized : ''} fixed top-0 left-0 h-full text-white transition-transform duration-300 transform`}
+        className={`${styles.sidebar} ${
+          !isOpen ? styles.sidebarMinimized : ""
+        } fixed top-0 left-0 h-full text-white transition-transform duration-300 transform`}
       >
         <div className="flex items-center justify-between p-4">
           <div className="flex flex-col space-y-1">
@@ -70,7 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
                 <div className="text-sm text-gray-400">{restaurantLocation}</div>
               </>
             ) : (
-              <i className="fas fa-utensils text-2xl"></i> // Example icon, change as needed
+              <i className="fas fa-utensils text-2xl"></i>
             )}
           </div>
         </div>
@@ -83,102 +76,48 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
               </a>
             </Link>
           </li>
-          <li className={`${pricingTier === 'Basic' ? styles.locked : ''}`}>
-            <Link href={`/restaurants/${restaurantId}/reports`} legacyBehavior>
-              <a
-                className={`flex items-center p-2 hover:bg-gray-800 rounded-md ${
-                  pricingTier === 'Basic' ? 'pointer-events-none opacity-50' : ''
-                }`}
-              >
-                <i className="fas fa-chart-line"></i>
-                {isOpen && <span className="ml-4">Reports</span>}
-              </a>
-            </Link>
-          </li>
-          <li className={`${pricingTier === 'Basic' ? styles.locked : ''}`}>
-            <Link href={`/restaurants/${restaurantId}/recommendations`} legacyBehavior>
-              <a
-                className={`flex items-center p-2 hover:bg-gray-800 rounded-md ${
-                  pricingTier === 'Basic' ? 'pointer-events-none opacity-50' : ''
-                }`}
-              >
-                <i className="fas fa-star"></i>
-                {isOpen && <span className="ml-4">Recommendations</span>}
-              </a>
-            </Link>
-          </li>
-          <li className={`${pricingTier === 'Basic' ? styles.locked : ''}`}>
-            <Link href={`/restaurants/${restaurantId}/orders`} legacyBehavior>
-              <a
-                className={`flex items-center p-2 hover:bg-gray-800 rounded-md ${
-                  pricingTier === 'Basic' ? 'pointer-events-none opacity-50' : ''
-                }`}
-              >
-                <i className="fas fa-receipt"></i>
-                {isOpen && <span className="ml-4">Orders</span>}
-              </a>
-            </Link>
-          </li>
-          <li>
-            <Link href={`/restaurants/${restaurantId}/menu-management`} legacyBehavior>
-              <a className="flex items-center p-2 hover:bg-gray-800 rounded-md">
-                <i className="fas fa-utensils"></i>
-                {isOpen && <span className="ml-4">Menu Management</span>}
-              </a>
-            </Link>
-          </li>
-          <li className={`${pricingTier === 'Basic' ? styles.locked : ''}`}>
-            <Link href={`/restaurants/${restaurantId}/inventory-dashboard`} legacyBehavior>
-              <a
-                className={`flex items-center p-2 hover:bg-gray-800 rounded-md ${
-                  pricingTier === 'Basic' ? 'pointer-events-none opacity-50' : ''
-                }`}
-              >
-                <i className="fas fa-warehouse"></i>
-                {isOpen && <span className="ml-4">Inventory Management</span>}
-              </a>
-            </Link>
-          </li>
-          <li className={`${pricingTier === 'Basic' ? styles.locked : ''}`}>
-            <Link href={`/restaurants/${restaurantId}/staff-management`} legacyBehavior>
-              <a
-                className={`flex items-center p-2 hover:bg-gray-800 rounded-md ${
-                  pricingTier === 'Basic' ? 'pointer-events-none opacity-50' : ''
-                }`}
-              >
-                <i className="fas fa-users-cog"></i>
-                {isOpen && <span className="ml-4">Staff Management</span>}
-              </a>
-            </Link>
-          </li>
-          <li className={`${pricingTier === 'Basic' ? styles.locked : ''}`}>
-            <Link href={`/restaurants/${restaurantId}/feedbacks`} legacyBehavior>
-              <a
-                className={`flex items-center p-2 hover:bg-gray-800 rounded-md ${
-                  pricingTier === 'Basic' ? 'pointer-events-none opacity-50' : ''
-                }`}
-              >
-                <i className="fas fa-comments"></i>
-                {isOpen && <span className="ml-4">Feedbacks</span>}
-              </a>
-            </Link>
-          </li>
-          <li>
-            <Link href={`/restaurants/${restaurantId}/contact-us`} legacyBehavior>
-              <a className="flex items-center p-2 hover:bg-gray-800 rounded-md">
-                <i className="fas fa-phone"></i>
-                {isOpen && <span className="ml-4">Contact Us</span>}
-              </a>
-            </Link>
-          </li>
+          {[
+            { label: "Reports", icon: "fa-chart-line", path: "reports" },
+            { label: "Recommendations", icon: "fa-star", path: "recommendations" },
+            { label: "Inventory Management", icon: "fa-warehouse", path: "inventory-dashboard" },
+            { label: "Orders", icon: "fas fa-receipt", path: "orders" },
+            { label: "Staff Management", icon: "fa-users-cog", path: "staff-management" },
+            { label: "Menu Management", icon: "fa-utensils", path: "menu-management" },
+            { label: "Feedbacks", icon: "fas fa-comments", path: "feedbacks" },
+            { label: "Contact Us", icon: "fa-phone", path: "contact-us" },
+          ].map((link) => (
+            <li
+              key={link.path}
+              className={isLocked(link.path) ? styles.locked : ""}
+            >
+              <Link href={`/restaurants/${restaurantId}/${link.path}`} legacyBehavior>
+                <a
+                  className={`flex items-center p-2 hover:bg-gray-800 rounded-md ${
+                    isLocked(link.path) ? "pointer-events-none opacity-50" : ""
+                  }`}
+                >
+                  <i className={`fas ${link.icon}`}></i>
+                  {isOpen && <span className="ml-4">{link.label}</span>}
+                </a>
+              </Link>
+            </li>
+          ))}
         </ul>
       </div>
-      <div className={`fixed top-4 ${isOpen ? 'left-64' : 'left-16'} z-50 transition-all duration-300`}>
+      <div
+        className={`fixed top-4 ${
+          isOpen ? "left-64" : "left-16"
+        } z-50 transition-all duration-300`}
+      >
         <button
           onClick={toggleSidebar}
           className="text-white bg-gray-900 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800"
         >
-          <i className={`fas ${isOpen ? 'fa-angle-double-left' : 'fa-angle-double-right'}`}></i>
+          <i
+            className={`fas ${
+              isOpen ? "fa-angle-double-left" : "fa-angle-double-right"
+            }`}
+          ></i>
         </button>
       </div>
     </div>
