@@ -1,0 +1,29 @@
+/* payca_admin/src/styles/login.module.css */
+.container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background-color: #f9fafb; /* Light gray background */
+  }
+  
+  .form {
+    background-color: white;
+    padding: 24px; /* Tailwind's p-6 */
+    border-radius: 8px; /* Tailwind's rounded */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Tailwind's shadow-md */
+  }
+  
+  .button {
+    background-color: #3b82f6; /* Tailwind's bg-blue-500 */
+    color: white;
+    padding: 12px; /* Tailwind's p-2 */
+    border-radius: 4px; /* Tailwind's rounded */
+    width: 100%;
+    cursor: pointer;
+  }
+  
+  .link {
+    color: #3b82f6; /* Tailwind's text-blue-500 */
+    text-decoration: underline;
+  }

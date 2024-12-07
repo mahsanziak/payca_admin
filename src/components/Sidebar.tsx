@@ -116,6 +116,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
             {isOpen && <span className="ml-4">Logout</span>}
           </button>
         </div>
+        <div className="p-4">
+          <button
+            onClick={handleLogout}
+            className="flex items-center p-2 hover:bg-gray-800 rounded-md text-red-500"
+          >
+            <i className="fas fa-sign-out-alt"></i>
+            {isOpen && <span className="ml-4">Logout</span>}
+          </button>
+        </div>
       </div>
       <div
         className={`fixed top-4 ${

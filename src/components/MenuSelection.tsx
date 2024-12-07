@@ -1,6 +1,7 @@
 import React from "react";
 import { supabase } from "../utils/supabaseClient";
 import styles from "./MenuSelection.module.css";
+import styles from "./MenuSelection.module.css";
 
 interface MenuSelectionProps {
   menus: any[];
