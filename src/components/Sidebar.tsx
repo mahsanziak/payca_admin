@@ -47,7 +47,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   }, [restaurantId]);
 
   const isLocked = (section: string) => pricingTier === "Basic" && lockedSections.includes(section);
-
+  const handleLogout = async () => {
+    // Perform logout logic (e.g., clear session, etc.)
+    await supabase.auth.signOut(); // Assuming you're using Supabase for authentication
+    router.push('/login'); // Redirect to the login page
+  };
   return (
     <div className="relative">
       <div
@@ -84,7 +88,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
             { label: "Staff Management", icon: "fa-users-cog", path: "staff-management" },
             { label: "Menu Management", icon: "fa-utensils", path: "menu-management" },
             { label: "Feedbacks", icon: "fas fa-comments", path: "feedbacks" },
-            { label: "Contact Us", icon: "fa-phone", path: "contact-us" },
+            { label: "Support", icon: "fa-phone", path: "contact-us" },
           ].map((link) => (
             <li
               key={link.path}
@@ -103,6 +107,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
             </li>
           ))}
         </ul>
+        <div className="p-4">
+          <button
+            onClick={handleLogout}
+            className="flex items-center p-2 hover:bg-gray-800 rounded-md text-red-500"
+          >
+            <i className="fas fa-sign-out-alt"></i>
+            {isOpen && <span className="ml-4">Logout</span>}
+          </button>
+        </div>
       </div>
       <div
         className={`fixed top-4 ${

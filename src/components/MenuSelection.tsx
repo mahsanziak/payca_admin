@@ -1,5 +1,6 @@
 import React from "react";
 import { supabase } from "../utils/supabaseClient";
+import styles from "./MenuSelection.module.css";
 
 interface MenuSelectionProps {
   menus: any[];
@@ -35,27 +36,32 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({
   };
 
   return (
-    <div>
-      <h2>Select a Menu</h2>
-      <ul>
+    <div className={styles.menuSelection}>
+      <h2 className={styles.title}>Select a Menu</h2>
+      <ul className={styles.menuList}>
         {menus.map((menu) => (
-          <li key={menu.id} style={{ marginBottom: "1rem" }}>
-            <label>
-              <input
-                type="checkbox"
-                checked={menu.enabled}
-                onChange={() => toggleMenuEnabled(menu.id)}
-              />
-              {menu.name}
-            </label>
+          <li
+            key={menu.id}
+            className={`${styles.menuItem} ${
+              selectedMenuId === menu.id ? styles.selected : ""
+            }`}
+          >
+            <div className={styles.menuInfo}>
+              <label className={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={menu.enabled}
+                  onChange={() => toggleMenuEnabled(menu.id)}
+                  className={styles.checkbox}
+                />
+                {menu.name}
+              </label>
+            </div>
             <button
               onClick={() => setSelectedMenuId(menu.id)}
-              style={{
-                marginLeft: "1rem",
-                fontWeight: selectedMenuId === menu.id ? "bold" : "normal",
-              }}
+              className={styles.button}
             >
-              View Details
+              {selectedMenuId === menu.id ? "Viewing" : "View Details"}
             </button>
           </li>
         ))}

@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../../utils/supabaseClient'; // Import your Supabase client
 import Draggable from 'react-draggable';
 import _ from 'lodash';
+import { ResizableBox } from 'react-resizable'; // Import ResizableBox
+
 
 type Order = {
   id: string;
@@ -34,7 +36,15 @@ const OrdersPage = () => {
   const [tables, setTables] = useState<Table[]>([]);
   const [editMode, setEditMode] = useState(false);
   const [showShapeModal, setShowShapeModal] = useState(false);
-
+  const [selectedOrderItems, setSelectedOrderItems] = useState<{ name: string; quantity: number }[] | null>(null);
+  const handleShowItems = (items: { name: string; quantity: number }[]) => {
+    setSelectedOrderItems(items);
+  };
+  
+  const handleClosePopup = () => {
+    setSelectedOrderItems(null);
+  };
+  
   useEffect(() => {
     const fetchTables = async () => {
       if (restaurantId) {
@@ -71,23 +81,22 @@ const OrdersPage = () => {
           const { data, error } = await supabase
             .from('orders')
             .select(`
-              id,
+              order_number,
               status,
               total_price,
               created_at,
               table_id,
-              staff:staff_id ( name )
+              items
             `)
             .eq('restaurant_id', restaurantId);
-
+  
           if (error) {
             console.error('Error fetching orders:', error);
           } else {
-            console.log('Raw Orders Data:', data);
-            const formattedOrders = data.map(order => ({
-              id: order.id,
+            const formattedOrders = data.map((order) => ({
+              order_number: order.order_number,
               status: order.status,
-              table: tables.find(t => t.id === order.table_id)?.table_number || 0,
+              table: tables.find((t) => t.id === order.table_id)?.table_number || 'N/A',
               time: new Date(order.created_at).toLocaleString('en-US', {
                 hour: 'numeric',
                 minute: 'numeric',
@@ -96,9 +105,9 @@ const OrdersPage = () => {
                 day: 'numeric',
               }),
               total: order.total_price,
-              waiterName: order.staff ? order.staff.name : null,
+              waiterName: 'N/A', // Set as N/A since staff info is not available
+              items: order.items || [], // Include the items field
             }));
-            console.log('Formatted Orders:', formattedOrders);
             setOrders(formattedOrders);
           }
         } catch (error) {
@@ -106,9 +115,10 @@ const OrdersPage = () => {
         }
       }
     };
-
+  
     fetchOrders();
   }, [restaurantId, tables]);
+  
 
   useEffect(() => {
     if (tables.some(table => table.occupied)) {
@@ -301,6 +311,7 @@ const OrdersPage = () => {
         </button>
         <button onClick={() => setShowShapeModal(true)}>Add Table</button>
       </div>
+  
       {showShapeModal && (
         <div className={styles.modal}>
           <div className={styles.modalContent}>
@@ -323,44 +334,124 @@ const OrdersPage = () => {
           </div>
         </div>
       )}
-      <div className={`${styles.ordersTableContainer}`}>
-        <table className={`${styles.ordersTable}`}>
-          <thead>
+  
+  <ResizableBox
+  width={Infinity}
+  height={300} // Default height
+  axis="y"
+  resizeHandles={['s']} // Resizing handle at the bottom
+  minConstraints={[Infinity, 200]} // Minimum height
+  maxConstraints={[Infinity, 600]} // Maximum height
+  className={styles.resizableBox}
+>
+  <div className={`${styles.ordersTableContainer}`}>
+    <table className={`${styles.ordersTable}`}>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Status</th>
+          <th>Table</th>
+          <th>Time</th>
+          <th>Total</th>
+          <th>Waiter</th>
+        </tr>
+      </thead>
+    </table>
+    <div className={styles.scrollableTableBody}>
+      <table className={`${styles.ordersTable}`}>
+        <tbody>
+          {orders.length > 0 ? (
+            orders
+              .filter((order) =>
+                showPastOrders
+                  ? order.status === 'paid'
+                  : order.status === 'pending' || order.status === 'ready'
+              )
+              .map((order) => (
+                <tr key={order.order_number}>
+                  <td
+                    className={styles.clickableId}
+                    onClick={() => handleShowItems(order.items || [])} // Show popup on click
+                  >
+                    {order.order_number}
+                  </td>
+                  <td>
+                    <select
+                      value={order.status}
+                      onChange={async (e) => {
+                        const newStatus = e.target.value;
+
+                        // Update status in the database
+                        const { error } = await supabase
+                          .from('orders')
+                          .update({ status: newStatus })
+                          .eq('order_number', order.order_number);
+
+                        if (error) {
+                          console.error('Error updating order status:', error);
+                        } else {
+                          // Update status in the UI
+                          setOrders((prevOrders) =>
+                            prevOrders.map((o) =>
+                              o.order_number === order.order_number
+                                ? { ...o, status: newStatus }
+                                : o
+                            )
+                          );
+                        }
+                      }}
+                      className={styles.statusDropdown}
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="ready">Ready</option>
+                      <option value="paid">Paid</option>
+                    </select>
+                  </td>
+                  <td>{order.table}</td>
+                  <td>{order.time}</td>
+                  <td>{order.total.toFixed(2)}</td>
+                  <td>{order.waiterName || ''}</td>
+                </tr>
+              ))
+          ) : (
             <tr>
-              <th>ID</th>
-              <th>Status</th>
-              <th>Table</th>
-              <th>Time</th>
-              <th>Total</th>
-              <th>Waiter</th>
+              <td colSpan={6} className={styles.noData}>
+                <i className="fas fa-database"></i> No data available
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {orders.length > 0 ? (
-              orders
-                .filter(order =>
-                  showPastOrders ? order.status === 'ready' : order.status === 'pending'
-                )
-                .map(order => (
-                  <tr key={order.id}>
-                    <td>{order.id}</td>
-                    <td>{order.status}</td>
-                    <td>{order.table}</td>
-                    <td>{order.time}</td>
-                    <td>{order.total.toFixed(2)}</td>
-                    <td>{order.waiterName || ''}</td>
-                  </tr>
-                ))
-            ) : (
-              <tr>
-                <td colSpan={6} className={styles.noData}>
-                  <i className="fas fa-database"></i> No data available
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+          )}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div className={styles.resizeHandle} /> {/* Custom resize handle */}
+</ResizableBox>
+
+
+{/* Popup for order items */}
+{/* Popup for order items */}
+{selectedOrderItems && (
+  <div className={styles.popupOverlay}>
+    <div className={styles.popupContent}>
+      <button className={styles.closeButton} onClick={handleClosePopup}>
+        &times; {/* Close button (X box) */}
+      </button>
+      <h3 className={styles.popupTitle}>Ordered Items</h3> {/* Updated title style */}
+      <ul>
+        {selectedOrderItems.map((item, index) => (
+          <li key={index}>
+            {item.name} - Quantity: {item.quantity}
+          </li>
+        ))}
+      </ul>
+    </div>
+  </div>
+)}
+
+
+
+
+  
       <div className={styles.tableMapContainer}>
         <h2 className="text-2xl font-semibold mb-4">Table Layout</h2>
         <div className={styles.tableMap} id="tableMap">
@@ -375,7 +466,9 @@ const OrdersPage = () => {
               scale={1} // Default scaling, adjust if your layout is scaled
             >
               <div
-                className={`${styles.tableCell} ${styles[table.shape]} ${table.occupied ? styles.occupied : styles.empty}`}
+                className={`${styles.tableCell} ${styles[table.shape]} ${
+                  table.occupied ? styles.occupied : styles.empty
+                }`}
                 onClick={() => handleTableClick(table.id)}
                 title={table.occupied ? `Occupied for: ${formatTimeElapsed(table.occupiedSince)}` : ''}
               >
@@ -393,13 +486,18 @@ const OrdersPage = () => {
                       className={styles.seatsSelect}
                       onClick={(e) => e.stopPropagation()} // Prevent dragging when interacting with dropdown
                     >
-                      {Array.from({ length: 20 }, (_, i) => i + 1).map(seats => (
+                      {Array.from({ length: 20 }, (_, i) => i + 1).map((seats) => (
                         <option key={seats} value={seats}>
                           {seats} Seats
                         </option>
                       ))}
                     </select>
-                    <button className={styles.deleteButton} onClick={() => handleDeleteTable(table.id)}>Delete</button>
+                    <button
+                      className={styles.deleteButton}
+                      onClick={() => handleDeleteTable(table.id)}
+                    >
+                      Delete
+                    </button>
                   </>
                 ) : (
                   <>

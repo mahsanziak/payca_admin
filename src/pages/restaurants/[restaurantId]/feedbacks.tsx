@@ -9,6 +9,18 @@ interface Feedback {
   created_at: string;
 }
 
+// Utility function to format the date
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  const day = date.getDate();
+  const month = date.toLocaleString('default', { month: 'long' });
+  const year = date.getFullYear();
+
+  // Add ordinal suffix to the day
+  const dayWithSuffix = day + (['th', 'st', 'nd', 'rd'][(day % 10 > 3 || [11, 12, 13].includes(day % 100)) ? 0 : day % 10]);
+  return `${dayWithSuffix} ${month}, ${year}`;
+};
+
 const FeedbacksPage = () => {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,7 +35,7 @@ const FeedbacksPage = () => {
       if (error) {
         console.error('Error fetching feedbacks:', error.message);
       } else {
-        setFeedbacks(data);
+        setFeedbacks(data || []);
       }
       setLoading(false);
     };
@@ -69,7 +81,7 @@ const FeedbacksPage = () => {
             {feedbacks.map((feedback) => (
               <tr key={feedback.id}>
                 <td>{feedback.rating}</td>
-                <td>{new Date(feedback.created_at).toLocaleDateString()}</td>
+                <td>{formatDate(feedback.created_at)}</td>
                 <td>{new Date(feedback.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
                 <td>{feedback.feedback_text}</td>
               </tr>

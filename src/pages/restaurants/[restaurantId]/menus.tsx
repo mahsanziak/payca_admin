@@ -11,6 +11,7 @@ const MenusPage = () => {
 
   const [menus, setMenus] = useState<any[]>([]);
   const [menuCategories, setMenuCategories] = useState<any[]>([]);
+  const [menuItems, setMenuItems] = useState<any[]>([]); // Explicitly fetch and store menu items
   const [selectedMenuId, setSelectedMenuId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -18,7 +19,10 @@ const MenusPage = () => {
   }, [restaurantId]);
 
   useEffect(() => {
-    if (selectedMenuId) fetchCategories(selectedMenuId);
+    if (selectedMenuId) {
+      fetchCategories(selectedMenuId);
+      fetchMenuItems(selectedMenuId); // Fetch menu items for the selected menu
+    }
   }, [selectedMenuId]);
 
   const fetchMenus = async () => {
@@ -35,27 +39,28 @@ const MenusPage = () => {
 
   const fetchCategories = async (menuId: string) => {
     try {
-      const { data: categories } = await supabase
+      const { data } = await supabase
         .from("menu_categories")
         .select("*")
         .eq("menu_id", menuId);
+      setMenuCategories(data || []);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
 
-      const { data: items } = await supabase
+  const fetchMenuItems = async (menuId: string) => {
+    try {
+      const { data } = await supabase
         .from("menu_items")
         .select("*")
         .eq("menu_id", menuId);
-
-      const categoriesWithItems = categories.map((category: any) => ({
-        ...category,
-        items: items.filter((item: any) => item.menu_category_id === category.id),
-      }));
-
-      setMenuCategories(categoriesWithItems);
+      setMenuItems(data || []);
     } catch (error) {
-      console.error("Error fetching categories or items:", error);
+      console.error("Error fetching menu items:", error);
     }
   };
-  // Add a new menu item
+
   const addItem = async (item: any) => {
     try {
       const { data, error } = await supabase
@@ -73,22 +78,13 @@ const MenusPage = () => {
       if (error) {
         console.error("Error adding item:", error.message);
       } else {
-        setMenuCategories((prevCategories) =>
-          prevCategories.map((category) =>
-            category.id === item.menu_category_id
-              ? {
-                  ...category,
-                  items: [...(category.items || []), data],
-                }
-              : category
-          )
-        );
+        setMenuItems((prevItems) => [...prevItems, data]);
       }
     } catch (error) {
       console.error("Error adding item:", error);
     }
   };
-  // Add a new category
+
   const addCategory = async (newCategoryName: string) => {
     try {
       const { data, error } = await supabase
@@ -107,7 +103,6 @@ const MenusPage = () => {
     }
   };
 
-  // Edit a category
   const editCategory = async (categoryId: string, newCategoryName: string) => {
     try {
       const { error } = await supabase
@@ -130,43 +125,50 @@ const MenusPage = () => {
       console.error("Error editing category:", error);
     }
   };
-    // Edit an existing menu item
-    const editItem = async (itemId: string, updatedItem: any) => {
-      try {
-        const { data, error } = await supabase
-          .from("menu_items")
-          .update(updatedItem)
-          .eq("id", itemId)
-          .select()
-          .single();
-  
-        if (error) {
-          console.error("Error updating item:", error.message);
-        } else {
-          setMenuCategories((prevCategories) =>
-            prevCategories.map((category) => ({
-              ...category,
-              items: (category.items || []).map((item: any) =>
-                item.id === itemId ? data : item
-              ),
-            }))
-          );
-        }
-      } catch (error) {
-        console.error("Error editing item:", error);
+
+  const editItem = async (itemId: string, updatedItem: any) => {
+    try {
+      const { data, error } = await supabase
+        .from("menu_items")
+        .update(updatedItem)
+        .eq("id", itemId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error updating item:", error.message);
+      } else {
+        setMenuItems((prevItems) =>
+          prevItems.map((item) => (item.id === itemId ? data : item))
+        );
       }
-    };
-  
-  // Define the deleteCategory function
+    } catch (error) {
+      console.error("Error editing item:", error);
+    }
+  };
+
   const deleteCategory = async (categoryId: string) => {
     try {
-      const { error } = await supabase
+      const { error: deleteItemsError } = await supabase
+        .from("menu_items")
+        .delete()
+        .or(`menu_category_id.eq.${categoryId},category_id.eq.${categoryId}`);
+
+      if (deleteItemsError) {
+        console.error(
+          "Error deleting items associated with category:",
+          deleteItemsError.message
+        );
+        return;
+      }
+
+      const { error: deleteCategoryError } = await supabase
         .from("menu_categories")
         .delete()
         .eq("id", categoryId);
 
-      if (error) {
-        console.error("Error deleting category:", error.message);
+      if (deleteCategoryError) {
+        console.error("Error deleting category:", deleteCategoryError.message);
       } else {
         setMenuCategories((prevCategories) =>
           prevCategories.filter((category) => category.id !== categoryId)
@@ -189,6 +191,7 @@ const MenusPage = () => {
       {selectedMenuId && (
         <CategoryList
           menuCategories={menuCategories}
+          menuItems={menuItems} // Pass menuItems explicitly
           addCategory={addCategory}
           deleteCategory={deleteCategory}
           editCategory={editCategory}
@@ -196,15 +199,15 @@ const MenusPage = () => {
           editItem={editItem}
           deleteItem={async (itemId) => {
             try {
-              const { error } = await supabase.from("menu_items").delete().eq("id", itemId);
+              const { error } = await supabase
+                .from("menu_items")
+                .delete()
+                .eq("id", itemId);
               if (error) {
                 console.error("Error deleting item:", error.message);
               } else {
-                setMenuCategories((prevCategories) =>
-                  prevCategories.map((category) => ({
-                    ...category,
-                    items: (category.items || []).filter((item: any) => item.id !== itemId),
-                  }))
+                setMenuItems((prevItems) =>
+                  prevItems.filter((item) => item.id !== itemId)
                 );
               }
             } catch (error) {
