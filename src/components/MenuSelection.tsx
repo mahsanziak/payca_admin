@@ -1,5 +1,6 @@
 import React from "react";
 import { supabase } from "../utils/supabaseClient";
+import styles from "./MenuSelection.module.css";
 
 interface MenuSelectionProps {
   menus: any[];
@@ -35,8 +36,20 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({
   };
 
   return (
-    <div>
+    <div className={styles.menuSelection}>
       <h2>Select a Menu</h2>
+      <select
+        className={styles.dropdown}
+        value={selectedMenuId || ""}
+        onChange={(e) => setSelectedMenuId(e.target.value)}
+      >
+        <option value="" disabled>Select a menu</option>
+        {menus.map((menu) => (
+          <option key={menu.id} value={menu.id}>
+            {menu.name}
+          </option>
+        ))}
+      </select>
       <ul>
         {menus.map((menu) => (
           <li key={menu.id} style={{ marginBottom: "1rem" }}>
@@ -48,15 +61,6 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({
               />
               {menu.name}
             </label>
-            <button
-              onClick={() => setSelectedMenuId(menu.id)}
-              style={{
-                marginLeft: "1rem",
-                fontWeight: selectedMenuId === menu.id ? "bold" : "normal",
-              }}
-            >
-              View Details
-            </button>
           </li>
         ))}
       </ul>
