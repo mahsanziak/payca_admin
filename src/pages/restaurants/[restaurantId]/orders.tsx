@@ -359,68 +359,80 @@ const OrdersPage = () => {
     </table>
     <div className={styles.scrollableTableBody}>
       <table className={`${styles.ordersTable}`}>
-        <tbody>
-          {orders.length > 0 ? (
-            orders
-              .filter((order) =>
-                showPastOrders
-                  ? order.status === 'paid'
-                  : order.status === 'pending' || order.status === 'ready'
-              )
-              .map((order) => (
-                <tr key={order.order_number}>
-                  <td
-                    className={styles.clickableId}
-                    onClick={() => handleShowItems(order.items || [])} // Show popup on click
-                  >
-                    {order.order_number}
-                  </td>
-                  <td>
-                    <select
-                      value={order.status}
-                      onChange={async (e) => {
-                        const newStatus = e.target.value;
+      <tbody>
+  {orders.length > 0 ? (
+    orders
+      // Sort orders: "Ready" at the bottom, then sort by order number (most recent first)
+      .sort((a, b) => {
+        if (a.status === "ready" && b.status !== "ready") return 1;
+        if (a.status !== "ready" && b.status === "ready") return -1;
+        return b.order_number - a.order_number;
+      })
+      // Exclude archived orders
+      .filter((order) => order.status !== "archive")
+      // Filter based on live/past orders
+      .filter((order) =>
+        showPastOrders
+          ? order.status === "paid"
+          : order.status === "pending" || order.status === "ready"
+      )
+      .map((order) => (
+        <tr key={order.order_number}>
+          <td
+            className={styles.clickableId}
+            onClick={() => handleShowItems(order.items || [])}
+          >
+            {order.order_number}
+          </td>
+          <td>
+            <select
+              value={order.status}
+              onChange={async (e) => {
+                const newStatus = e.target.value;
 
-                        // Update status in the database
-                        const { error } = await supabase
-                          .from('orders')
-                          .update({ status: newStatus })
-                          .eq('order_number', order.order_number);
+                // Update status in the database
+                const { error } = await supabase
+                  .from("orders")
+                  .update({ status: newStatus })
+                  .eq("order_number", order.order_number);
 
-                        if (error) {
-                          console.error('Error updating order status:', error);
-                        } else {
-                          // Update status in the UI
-                          setOrders((prevOrders) =>
-                            prevOrders.map((o) =>
-                              o.order_number === order.order_number
-                                ? { ...o, status: newStatus }
-                                : o
-                            )
-                          );
-                        }
-                      }}
-                      className={styles.statusDropdown}
-                    >
-                      <option value="pending">Pending</option>
-                      <option value="ready">Ready</option>
-                      <option value="paid">Paid</option>
-                    </select>
-                  </td>
-                  <td>{order.table}</td>
-                  <td>{order.time}</td>
-                  <td>{order.total.toFixed(2)}</td>
-                  <td>{order.waiterName || ''}</td>
-                </tr>
-              ))
-          ) : (
-            <tr>
-              <td colSpan={6} className={styles.noData}>
-                <i className="fas fa-database"></i> No data available
-              </td>
-            </tr>
-          )}
-        </tbody>
+                if (error) {
+                  console.error("Error updating order status:", error);
+                } else {
+                  // Update status in the UI
+                  setOrders((prevOrders) =>
+                    prevOrders.map((o) =>
+                      o.order_number === order.order_number
+                        ? { ...o, status: newStatus }
+                        : o
+                    )
+                  );
+                }
+              }}
+              className={styles.statusDropdown}
+            >
+              <option value="pending">Pending</option>
+              <option value="ready">Ready</option>
+              <option value="paid">Paid</option>
+              <option value="archive">Archive</option> {/* Add Archive Option */}
+            </select>
+          </td>
+          <td>{order.table}</td>
+          <td>{order.time}</td>
+          <td>{order.total.toFixed(2)}</td>
+          <td>{order.waiterName || ""}</td>
+        </tr>
+      ))
+  ) : (
+    <tr>
+      <td colSpan={6} className={styles.noData}>
+        <i className="fas fa-database"></i> No data available
+      </td>
+    </tr>
+  )}
+</tbody>
+
+
       </table>
     </div>
   </div>

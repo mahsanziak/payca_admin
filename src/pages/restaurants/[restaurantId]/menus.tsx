@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import MenuSelection from "../../../components/MenuSelection";
 import CategoryList from "../../../components/CategoryList";
+import PreviewMenu from "../../../components/PreviewMenu"; // Import the PreviewMenu component
 import { supabase } from "../../../utils/supabaseClient";
 import styles from "../../../components/MenusPage.module.css";
 
@@ -188,6 +189,8 @@ const MenusPage = () => {
         setSelectedMenuId={setSelectedMenuId}
         refreshMenus={fetchMenus}
       />
+      {/* Add the PreviewMenu component below the MenuSelection */}
+      <PreviewMenu restaurantId={restaurantId as string} />
       {selectedMenuId && (
         <CategoryList
           menuCategories={menuCategories}

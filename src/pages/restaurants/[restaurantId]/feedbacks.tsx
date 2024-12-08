@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../utils/supabaseClient';
 import styles from '../../../components/feedbacks.module.css'; // Adjust the import path if needed
+import { useRouter } from 'next/router'; // Import the router to get restaurant_id from the URL
 
 interface Feedback {
   id: string;
@@ -24,12 +25,17 @@ const formatDate = (dateString: string) => {
 const FeedbacksPage = () => {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter(); // Initialize router
+  const { restaurantId } = router.query; // Extract restaurant_id from the URL
 
   useEffect(() => {
     const fetchFeedbacks = async () => {
+      if (!restaurantId) return; // Wait until restaurantId is available
+
       const { data, error } = await supabase
         .from('feedbacks')
         .select('id, feedback_text, rating, created_at')
+        .eq('restaurant_id', restaurantId) // Filter by restaurant_id
         .order('created_at', { ascending: false }); // Order by the most recent feedbacks
 
       if (error) {
@@ -41,7 +47,7 @@ const FeedbacksPage = () => {
     };
 
     fetchFeedbacks();
-  }, []);
+  }, [restaurantId]); // Trigger the effect whenever restaurantId changes
 
   return (
     <div className={styles.container}>

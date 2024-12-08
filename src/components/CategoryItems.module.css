@@ -41,6 +41,14 @@
 .itemDetails button {
   margin-left: 10px;
 }
+.itemImage {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 8px; /* Optional: Rounded corners */
+  margin-bottom: 8px; /* Optional: Spacing below the image */
+}
+
 
 .itemDetails .MuiIconButton-root {
   padding: 5px;
