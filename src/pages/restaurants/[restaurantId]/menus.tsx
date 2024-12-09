@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import MenuSelection from "../../../components/MenuSelection";
 import CategoryList from "../../../components/CategoryList";
-import PreviewMenu from "../../../components/PreviewMenu"; // Import the PreviewMenu component
+import PreviewMenu from "../../../components/PreviewMenu";
 import { supabase } from "../../../utils/supabaseClient";
 import styles from "../../../components/MenusPage.module.css";
 
@@ -12,53 +12,70 @@ const MenusPage = () => {
 
   const [menus, setMenus] = useState<any[]>([]);
   const [menuCategories, setMenuCategories] = useState<any[]>([]);
-  const [menuItems, setMenuItems] = useState<any[]>([]); // Explicitly fetch and store menu items
+  const [menuItems, setMenuItems] = useState<any[]>([]);
   const [selectedMenuId, setSelectedMenuId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (restaurantId) fetchMenus();
+    if (restaurantId) {
+      fetchMenus();
+    }
   }, [restaurantId]);
 
   useEffect(() => {
     if (selectedMenuId) {
       fetchCategories(selectedMenuId);
-      fetchMenuItems(selectedMenuId); // Fetch menu items for the selected menu
+      fetchMenuItems(selectedMenuId);
     }
   }, [selectedMenuId]);
 
   const fetchMenus = async () => {
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("menus")
         .select("*")
         .eq("restaurant_id", restaurantId);
-      setMenus(data || []);
+
+      if (error) {
+        console.error("Error fetching menus:", error);
+      } else {
+        setMenus(data || []);
+      }
     } catch (error) {
-      console.error("Error fetching menus:", error);
+      console.error("Unexpected error fetching menus:", error);
     }
   };
 
   const fetchCategories = async (menuId: string) => {
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("menu_categories")
         .select("*")
         .eq("menu_id", menuId);
-      setMenuCategories(data || []);
+
+      if (error) {
+        console.error("Error fetching categories:", error);
+      } else {
+        setMenuCategories(data || []);
+      }
     } catch (error) {
-      console.error("Error fetching categories:", error);
+      console.error("Unexpected error fetching categories:", error);
     }
   };
 
   const fetchMenuItems = async (menuId: string) => {
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("menu_items")
         .select("*")
         .eq("menu_id", menuId);
-      setMenuItems(data || []);
+
+      if (error) {
+        console.error("Error fetching menu items:", error);
+      } else {
+        setMenuItems(data || []);
+      }
     } catch (error) {
-      console.error("Error fetching menu items:", error);
+      console.error("Unexpected error fetching menu items:", error);
     }
   };
 
@@ -82,7 +99,7 @@ const MenusPage = () => {
         setMenuItems((prevItems) => [...prevItems, data]);
       }
     } catch (error) {
-      console.error("Error adding item:", error);
+      console.error("Unexpected error adding item:", error);
     }
   };
 
@@ -100,7 +117,7 @@ const MenusPage = () => {
         setMenuCategories((prevCategories) => [...prevCategories, data]);
       }
     } catch (error) {
-      console.error("Error adding category:", error);
+      console.error("Unexpected error adding category:", error);
     }
   };
 
@@ -123,7 +140,7 @@ const MenusPage = () => {
         );
       }
     } catch (error) {
-      console.error("Error editing category:", error);
+      console.error("Unexpected error editing category:", error);
     }
   };
 
@@ -144,7 +161,7 @@ const MenusPage = () => {
         );
       }
     } catch (error) {
-      console.error("Error editing item:", error);
+      console.error("Unexpected error editing item:", error);
     }
   };
 
@@ -176,7 +193,7 @@ const MenusPage = () => {
         );
       }
     } catch (error) {
-      console.error("Error deleting category:", error);
+      console.error("Unexpected error deleting category:", error);
     }
   };
 
@@ -189,23 +206,23 @@ const MenusPage = () => {
         setSelectedMenuId={setSelectedMenuId}
         refreshMenus={fetchMenus}
       />
-      {/* Add the PreviewMenu component below the MenuSelection */}
       <PreviewMenu restaurantId={restaurantId as string} />
       {selectedMenuId && (
         <CategoryList
           menuCategories={menuCategories}
-          menuItems={menuItems} // Pass menuItems explicitly
+          menuItems={menuItems}
           addCategory={addCategory}
           deleteCategory={deleteCategory}
           editCategory={editCategory}
           addItem={addItem}
           editItem={editItem}
-          deleteItem={async (itemId) => {
+          deleteItem={async (itemId: string) => {
             try {
               const { error } = await supabase
                 .from("menu_items")
                 .delete()
                 .eq("id", itemId);
+
               if (error) {
                 console.error("Error deleting item:", error.message);
               } else {
@@ -214,7 +231,7 @@ const MenusPage = () => {
                 );
               }
             } catch (error) {
-              console.error("Error deleting item:", error);
+              console.error("Unexpected error deleting item:", error);
             }
           }}
         />

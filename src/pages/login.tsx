@@ -82,8 +82,7 @@ const Login = () => {
           Login
         </button>
         <div className="mt-4 text-center">
-          <p className="text-gray-600">Don't have an account?</p>
-          <button 
+        <p className="text-gray-600">Don&apos;t have an account?</p>          <button 
             onClick={handleCreateAccount} 
             className={styles.link}
           >

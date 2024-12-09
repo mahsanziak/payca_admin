@@ -81,15 +81,13 @@ const CategoryList = ({
             </div>
 
             <CategoryItems
-              items={menuItems.filter(
-                (item: any) => item.category_id === category.id
-              )}
-              editItem={editItem}
-              deleteItem={deleteItem}
-              addItem={(newItem) =>
-                addItem({ ...newItem, category_id: category.id })
-              } // Pass addItem here
-            />
+  items={menuItems.filter((item: any) => item.category_id === category.id)}
+  editItem={editItem}
+  deleteItem={deleteItem}
+  addItem={(newItem) => addItem({ ...newItem, category_id: category.id })} // Pass addItem here
+  categoryId={category.id} // Pass categoryId to match the required prop
+/>
+
           </li>
         ))}
       </ul>

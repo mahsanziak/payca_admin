@@ -5,22 +5,25 @@ import { supabase } from '../../../utils/supabaseClient'; // Import your Supabas
 import Draggable from 'react-draggable';
 import _ from 'lodash';
 import { ResizableBox } from 'react-resizable'; // Import ResizableBox
+import { DraggableEvent, DraggableData } from "react-draggable"; // Import types for event and position
 
 
 type Order = {
   id: string;
+  order_number: number;
   status: string;
-  table: string;
+  table: string | number;
   time: string;
   total: number;
   waiterName: string | null;
+  items: { name: string; quantity: number }[];
 };
 
 type Table = {
   id: string;
   table_number: number;
   seats: number;
-  shape: 'square' | 'rectangle' | 'circle';
+  shape: "square" | "rectangle" | "circle";
   position: { x: number; y: number };
   occupied: boolean;
   occupiedSince: Date | null;
@@ -36,11 +39,15 @@ const OrdersPage = () => {
   const [tables, setTables] = useState<Table[]>([]);
   const [editMode, setEditMode] = useState(false);
   const [showShapeModal, setShowShapeModal] = useState(false);
-  const [selectedOrderItems, setSelectedOrderItems] = useState<{ name: string; quantity: number }[] | null>(null);
+  const [selectedOrderItems, setSelectedOrderItems] = useState<
+    { name: string; quantity: number }[] | null
+  >(null);
+  
+  
   const handleShowItems = (items: { name: string; quantity: number }[]) => {
     setSelectedOrderItems(items);
   };
-  
+
   const handleClosePopup = () => {
     setSelectedOrderItems(null);
   };
@@ -49,12 +56,12 @@ const OrdersPage = () => {
     const fetchTables = async () => {
       if (restaurantId) {
         const { data, error } = await supabase
-          .from('tables')
-          .select('*')
-          .eq('restaurant_id', restaurantId);
+          .from("tables")
+          .select("*")
+          .eq("restaurant_id", restaurantId);
 
         if (error) {
-          console.error('Error fetching tables:', error);
+          console.error("Error fetching tables:", error);
         } else {
           const formattedTables = data.map((table) => ({
             id: table.id,
@@ -63,8 +70,12 @@ const OrdersPage = () => {
             shape: table.shape,
             position: { x: table.position_x, y: table.position_y },
             occupied: table.occupied,
-            occupiedSince: table.occupied_since ? new Date(table.occupied_since) : null,
-            orderEndTime: table.order_end_time ? new Date(table.order_end_time) : null,
+            occupiedSince: table.occupied_since
+              ? new Date(table.occupied_since)
+              : null,
+            orderEndTime: table.order_end_time
+              ? new Date(table.order_end_time)
+              : null,
           }));
           setTables(formattedTables);
         }
@@ -79,49 +90,55 @@ const OrdersPage = () => {
       if (restaurantId) {
         try {
           const { data, error } = await supabase
-            .from('orders')
-            .select(`
-              order_number,
-              status,
-              total_price,
-              created_at,
-              table_id,
-              items
-            `)
-            .eq('restaurant_id', restaurantId);
-  
+            .from("orders")
+            .select(
+              `
+                id,
+                order_number,
+                status,
+                total_price,
+                created_at,
+                table_id,
+                items
+              `
+            )
+            .eq("restaurant_id", restaurantId);
+
           if (error) {
-            console.error('Error fetching orders:', error);
+            console.error("Error fetching orders:", error);
           } else {
             const formattedOrders = data.map((order) => ({
+              id: order.id,
               order_number: order.order_number,
               status: order.status,
-              table: tables.find((t) => t.id === order.table_id)?.table_number || 'N/A',
-              time: new Date(order.created_at).toLocaleString('en-US', {
-                hour: 'numeric',
-                minute: 'numeric',
+              table:
+                tables.find((t) => t.id === order.table_id)?.table_number ||
+                "N/A",
+              time: new Date(order.created_at).toLocaleString("en-US", {
+                hour: "numeric",
+                minute: "numeric",
                 hour12: true,
-                month: 'short',
-                day: 'numeric',
+                month: "short",
+                day: "numeric",
               }),
               total: order.total_price,
-              waiterName: 'N/A', // Set as N/A since staff info is not available
-              items: order.items || [], // Include the items field
+              waiterName: "N/A",
+              items: order.items || [],
             }));
             setOrders(formattedOrders);
           }
         } catch (error) {
-          console.error('Error fetching orders:', error);
+          console.error("Error fetching orders:", error);
         }
       }
     };
-  
+
     fetchOrders();
   }, [restaurantId, tables]);
   
 
   useEffect(() => {
-    if (tables.some(table => table.occupied)) {
+    if (tables.some((table) => table.occupied)) {
       const interval = setInterval(() => {
         setTables([...tables]); // Trigger re-render to update time
       }, 1000);
@@ -208,18 +225,29 @@ const OrdersPage = () => {
     );
   }, 100);
 
-  const handleDragStop = async (e, position, tableId) => {
+
+  const handleDragStop = (e: DraggableEvent, position: DraggableData, tableId: string): void => {
     const { x, y } = position;
-
-    const { error } = await supabase
-      .from('tables')
-      .update({ position_x: x, position_y: y })
-      .eq('id', tableId);
-
-    if (error) {
-      console.error('Error updating table position:', error);
-    }
+  
+    // Use an async IIFE to handle the async logic
+    (async () => {
+      try {
+        const { error } = await supabase
+          .from("tables")
+          .update({ position_x: x, position_y: y })
+          .eq("id", tableId);
+  
+        if (error) {
+          console.error("Error updating table position:", error);
+        }
+      } catch (err) {
+        console.error("Unexpected error:", err);
+      }
+    })();
   };
+  
+  
+  
 
   const handleTableClick = async (tableId: string) => {
     if (editMode) return; // Prevent toggling status if in edit mode
@@ -336,129 +364,125 @@ const OrdersPage = () => {
       )}
   
   <ResizableBox
-  width={Infinity}
-  height={300} // Default height
-  axis="y"
-  resizeHandles={['s']} // Resizing handle at the bottom
-  minConstraints={[Infinity, 200]} // Minimum height
-  maxConstraints={[Infinity, 600]} // Maximum height
-  className={styles.resizableBox}
->
-  <div className={`${styles.ordersTableContainer}`}>
-    <table className={`${styles.ordersTable}`}>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Status</th>
-          <th>Table</th>
-          <th>Time</th>
-          <th>Total</th>
-          <th>Waiter</th>
-        </tr>
-      </thead>
-    </table>
-    <div className={styles.scrollableTableBody}>
-      <table className={`${styles.ordersTable}`}>
-      <tbody>
-  {orders.length > 0 ? (
-    orders
-      // Sort orders: "Ready" at the bottom, then sort by order number (most recent first)
-      .sort((a, b) => {
-        if (a.status === "ready" && b.status !== "ready") return 1;
-        if (a.status !== "ready" && b.status === "ready") return -1;
-        return b.order_number - a.order_number;
-      })
-      // Exclude archived orders
-      .filter((order) => order.status !== "archive")
-      // Filter based on live/past orders
-      .filter((order) =>
-        showPastOrders
-          ? order.status === "paid"
-          : order.status === "pending" || order.status === "ready"
-      )
-      .map((order) => (
-        <tr key={order.order_number}>
-          <td
-            className={styles.clickableId}
-            onClick={() => handleShowItems(order.items || [])}
-          >
-            {order.order_number}
-          </td>
-          <td>
-            <select
-              value={order.status}
-              onChange={async (e) => {
-                const newStatus = e.target.value;
-
-                // Update status in the database
-                const { error } = await supabase
-                  .from("orders")
-                  .update({ status: newStatus })
-                  .eq("order_number", order.order_number);
-
-                if (error) {
-                  console.error("Error updating order status:", error);
-                } else {
-                  // Update status in the UI
-                  setOrders((prevOrders) =>
-                    prevOrders.map((o) =>
-                      o.order_number === order.order_number
-                        ? { ...o, status: newStatus }
-                        : o
+        width={Infinity}
+        height={300}
+        axis="y"
+        resizeHandles={["s"]}
+        minConstraints={[Infinity, 200]}
+        maxConstraints={[Infinity, 600]}
+        className={styles.resizableBox}
+      >
+        <div className={styles.ordersTableContainer}>
+          <table className={styles.ordersTable}>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Status</th>
+                <th>Table</th>
+                <th>Time</th>
+                <th>Total</th>
+                <th>Waiter</th>
+              </tr>
+            </thead>
+          </table>
+          <div className={styles.scrollableTableBody}>
+            <table className={styles.ordersTable}>
+              <tbody>
+                {orders.length > 0 ? (
+                  orders
+                    .sort((a, b) => {
+                      if (a.status === "ready" && b.status !== "ready")
+                        return 1;
+                      if (a.status !== "ready" && b.status === "ready")
+                        return -1;
+                      return b.order_number - a.order_number;
+                    })
+                    .filter((order) => order.status !== "archive")
+                    .filter((order) =>
+                      showPastOrders
+                        ? order.status === "paid"
+                        : order.status === "pending" ||
+                          order.status === "ready"
                     )
-                  );
-                }
-              }}
-              className={styles.statusDropdown}
-            >
-              <option value="pending">Pending</option>
-              <option value="ready">Ready</option>
-              <option value="paid">Paid</option>
-              <option value="archive">Archive</option> {/* Add Archive Option */}
-            </select>
-          </td>
-          <td>{order.table}</td>
-          <td>{order.time}</td>
-          <td>{order.total.toFixed(2)}</td>
-          <td>{order.waiterName || ""}</td>
-        </tr>
-      ))
-  ) : (
-    <tr>
-      <td colSpan={6} className={styles.noData}>
-        <i className="fas fa-database"></i> No data available
-      </td>
-    </tr>
-  )}
-</tbody>
+                    .map((order) => (
+                      <tr key={order.id}>
+                        <td
+                          className={styles.clickableId}
+                          onClick={() =>
+                            handleShowItems(order.items || [])
+                          }
+                        >
+                          {order.order_number}
+                        </td>
+                        <td>
+                          <select
+                            value={order.status}
+                            onChange={async (e) => {
+                              const newStatus = e.target.value;
+                              const { error } = await supabase
+                                .from("orders")
+                                .update({ status: newStatus })
+                                .eq("id", order.id);
+
+                              if (!error) {
+                                setOrders((prevOrders) =>
+                                  prevOrders.map((o) =>
+                                    o.id === order.id
+                                      ? { ...o, status: newStatus }
+                                      : o
+                                  )
+                                );
+                              }
+                            }}
+                            className={styles.statusDropdown}
+                          >
+                            <option value="pending">Pending</option>
+                            <option value="ready">Ready</option>
+                            <option value="paid">Paid</option>
+                            <option value="archive">Archive</option>
+                          </select>
+                        </td>
+                        <td>{order.table}</td>
+                        <td>{order.time}</td>
+                        <td>${order.total.toFixed(2)}</td>
+                        <td>{order.waiterName || ""}</td>
+                      </tr>
+                    ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className={styles.noData}>
+                      <i className="fas fa-database"></i> No data available
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div className={styles.resizeHandle} />
+      </ResizableBox>
 
 
-      </table>
-    </div>
-  </div>
-  <div className={styles.resizeHandle} /> {/* Custom resize handle */}
-</ResizableBox>
-
-
-{/* Popup for order items */}
-{/* Popup for order items */}
 {selectedOrderItems && (
-  <div className={styles.popupOverlay}>
-    <div className={styles.popupContent}>
-      <button className={styles.closeButton} onClick={handleClosePopup}>
-        &times; {/* Close button (X box) */}
-      </button>
-      <h3 className={styles.popupTitle}>Ordered Items</h3> {/* Updated title style */}
-      <ul>
-        {selectedOrderItems.map((item, index) => (
-          <li key={index}>
-            {item.name} - Quantity: {item.quantity}
-          </li>
-        ))}
-      </ul>
-    </div>
-  </div>
-)}
+        <div className={styles.popupOverlay}>
+          <div className={styles.popupContent}>
+            <button
+              className={styles.closeButton}
+              onClick={handleClosePopup}
+            >
+              &times;
+            </button>
+            <h3 className={styles.popupTitle}>Ordered Items</h3>
+            <ul>
+              {selectedOrderItems.map((item, index) => (
+                <li key={index}>
+                  {item.name} - Quantity: {item.quantity}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
 
 
 
@@ -469,56 +493,61 @@ const OrdersPage = () => {
         <div className={styles.tableMap} id="tableMap">
           {tables.map((table) => (
             <Draggable
-              key={table.id}
-              bounds="parent"
-              position={{ x: table.position.x, y: table.position.y }}
-              onStop={(e, position) => handleDragStop(e, position, table.id)}
-              onDrag={(e, position) => handleDrag(e, position, table.id)}
-              disabled={!editMode}
-              scale={1} // Default scaling, adjust if your layout is scaled
-            >
-              <div
-                className={`${styles.tableCell} ${styles[table.shape]} ${
-                  table.occupied ? styles.occupied : styles.empty
-                }`}
-                onClick={() => handleTableClick(table.id)}
-                title={table.occupied ? `Occupied for: ${formatTimeElapsed(table.occupiedSince)}` : ''}
-              >
-                {editMode ? (
-                  <>
-                    <input
-                      type="number"
-                      value={table.table_number}
-                      onChange={(e) => handleTableNumberChange(table.id, Number(e.target.value))}
-                      className={styles.tableNumberInput}
-                    />
-                    <select
-                      value={table.seats}
-                      onChange={(e) => handleSeatsChange(table.id, Number(e.target.value))}
-                      className={styles.seatsSelect}
-                      onClick={(e) => e.stopPropagation()} // Prevent dragging when interacting with dropdown
-                    >
-                      {Array.from({ length: 20 }, (_, i) => i + 1).map((seats) => (
-                        <option key={seats} value={seats}>
-                          {seats} Seats
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      className={styles.deleteButton}
-                      onClick={() => handleDeleteTable(table.id)}
-                    >
-                      Delete
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    Table {table.table_number} <br />
-                    {table.seats} Seats
-                  </>
-                )}
-              </div>
-            </Draggable>
+  key={table.id}
+  bounds="parent"
+  position={{ x: table.position.x, y: table.position.y }}
+  onStop={(e, position) => handleDragStop(e, position, table.id)}
+  onDrag={(e, position) => handleDrag(e, position, table.id)}
+  disabled={!editMode}
+  scale={1} // Default scaling, adjust if your layout is scaled
+>
+  <div
+    className={`${styles.tableCell} ${styles[table.shape]} ${
+      table.occupied ? styles.occupied : styles.empty
+    }`}
+    onClick={() => handleTableClick(table.id)}
+    title={table.occupied ? `Occupied for: ${formatTimeElapsed(table.occupiedSince)}` : ""}
+  >
+    {editMode ? (
+      <>
+        <input
+          type="number"
+          value={table.table_number}
+          onChange={(e) =>
+            handleTableNumberChange(table.id, Number(e.target.value))
+          }
+          className={styles.tableNumberInput}
+        />
+        <select
+          value={table.seats}
+          onChange={(e) => handleSeatsChange(table.id, Number(e.target.value))}
+          className={styles.seatsSelect}
+          onClick={(e) => e.stopPropagation()} // Prevent dragging when interacting with dropdown
+        >
+          {Array.from({ length: 20 }, (_, i) => i + 1).map((seats) => (
+            <option key={seats} value={seats}>
+              {seats} Seats
+            </option>
+          ))}
+        </select>
+        <button
+          className={styles.deleteButton}
+          onClick={() => handleDeleteTable(table.id)}
+        >
+          Delete
+        </button>
+      </>
+    ) : (
+      <>
+        Table {table.table_number} <br />
+        {table.seats} Seats
+      </>
+    )}
+  </div>
+</Draggable>
+
+
+
           ))}
         </div>
       </div>
