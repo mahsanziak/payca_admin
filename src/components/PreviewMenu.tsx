@@ -12,21 +12,24 @@ const PreviewMenu: React.FC<PreviewMenuProps> = ({ restaurantId }) => {
   useEffect(() => {
     const fetchMenuUrl = async () => {
       try {
-        const { data, error } = await supabase
-          .from("restaurants")
-          .select("url")
-          .eq("id", restaurantId)
+        // Fetch any table for the given restaurantId
+        const { data: tables, error } = await supabase
+          .from("tables")
+          .select("id")
+          .eq("restaurant_id", restaurantId)
+          .limit(1)
           .single();
 
-        if (error) {
-          console.error("Error fetching menu URL:", error.message);
-        } else if (data?.url) {
-          setMenuUrl(data.url);
+        if (error || !tables?.id) {
+          setMenuUrl(null); // Handle case where no table exists
         } else {
-          setMenuUrl(null); // Handle case where URL is not set
+          const tableId = tables.id;
+          const constructedUrl = `https://paycamenu.com/restaurants/${restaurantId}/tables/${tableId}`;
+          setMenuUrl(constructedUrl);
         }
       } catch (error) {
-        console.error("Unexpected error fetching menu URL:", error);
+        console.error("Unexpected error fetching table:", error);
+        setMenuUrl(null); // Handle unexpected errors
       }
     };
 
@@ -48,7 +51,9 @@ const PreviewMenu: React.FC<PreviewMenuProps> = ({ restaurantId }) => {
           />
         </div>
       ) : (
-        <p className={styles.placeholder}>Menu preview not available</p>
+        <p className={styles.placeholder}>
+          Create a Table in the Orders page to view your live menu
+        </p>
       )}
     </div>
   );
