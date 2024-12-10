@@ -83,6 +83,21 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({
         </button>
       </div>
 
+      {/* Dropdown for Selecting Menu */}
+      <h2 className={styles.title}>Select a Menu</h2>
+      <select
+        value={selectedMenuId || ""}
+        onChange={(e) => setSelectedMenuId(e.target.value)}
+        className={styles.dropdown}
+      >
+        <option value="" disabled>Select a menu</option>
+        {menus.map((menu) => (
+          <option key={menu.id} value={menu.id}>
+            {menu.name}
+          </option>
+        ))}
+      </select>
+
       {/* Modal for Creating New Menu */}
       {showModal && (
         <div className={styles.modalOverlay}>
@@ -113,36 +128,6 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({
           </div>
         </div>
       )}
-
-      <h2 className={styles.title}>Select a Menu</h2>
-      <ul className={styles.menuList}>
-        {menus.map((menu) => (
-          <li
-            key={menu.id}
-            className={`${styles.menuItem} ${
-              selectedMenuId === menu.id ? styles.selected : ""
-            }`}
-          >
-            <div className={styles.menuInfo}>
-              <label className={styles.checkboxLabel}>
-                <input
-                  type="checkbox"
-                  checked={menu.enabled}
-                  onChange={() => toggleMenuEnabled(menu.id)}
-                  className={styles.checkbox}
-                />
-                {menu.name}
-              </label>
-            </div>
-            <button
-              onClick={() => setSelectedMenuId(menu.id)}
-              className={styles.button}
-            >
-              {selectedMenuId === menu.id ? "Viewing" : "View Details"}
-            </button>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 };

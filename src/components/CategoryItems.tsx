@@ -151,8 +151,7 @@ const CategoryItems: React.FC<CategoryItemsProps> = ({
           </li>
         ))}
       </ul>
-      <div className={styles.addItem}>
-        <h4>Add New Item</h4>
+      <div className={styles.addItemRow}>
         <input
           type="text"
           placeholder="Item name"
