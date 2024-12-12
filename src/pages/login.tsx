@@ -8,6 +8,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isResetting, setIsResetting] = useState(false); // Track if user is resetting password
   const router = useRouter();
 
   useEffect(() => {
@@ -42,6 +43,25 @@ const Login = () => {
       setError(error.message || 'An error occurred during login');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    setIsResetting(true);
+    setError(null);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      });
+
+      if (error) throw error;
+
+      alert('Password reset email has been sent.');
+    } catch (error: any) {
+      setError(error.message || 'Failed to send password reset email.');
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -82,6 +102,17 @@ const Login = () => {
         >
           {loading ? 'Logging in...' : 'Login'}
         </button>
+
+        <div className="mt-4 text-center">
+          <button 
+            type="button"
+            onClick={handleForgotPassword} 
+            className={`${styles.link} text-blue-500`}
+            disabled={isResetting}
+          >
+            {isResetting ? 'Sending reset email...' : 'Forgot Password?'}
+          </button>
+        </div>
 
         <div className="mt-4 text-center">
           <p className="text-gray-600">Don&apos;t have an account?</p>
