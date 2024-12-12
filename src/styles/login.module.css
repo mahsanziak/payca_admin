@@ -30,3 +30,47 @@
     color: #3b82f6; /* Tailwind's text-blue-500 */
     text-decoration: underline;
   }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 20px 0;
+  }
+
+  .divider::before,
+  .divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .divider span {
+    padding: 0 10px;
+    color: #6b7280;
+    font-size: 0.875rem;
+  }
+
+  .googleButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 12px;
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    color: #374151;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .googleButton:hover {
+    background-color: #f3f4f6;
+  }
+
+  .button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }

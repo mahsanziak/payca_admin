@@ -6,6 +6,7 @@ import Draggable from 'react-draggable';
 import _ from 'lodash';
 import { ResizableBox } from 'react-resizable'; // Import ResizableBox
 import { DraggableEvent, DraggableData } from "react-draggable"; // Import types for event and position
+import TableQRCode from '../../../components/TableQRCode';
 
 
 type Order = {
@@ -42,6 +43,7 @@ const OrdersPage = () => {
   const [selectedOrderItems, setSelectedOrderItems] = useState<
     { name: string; quantity: number }[] | null
   >(null);
+  const [showQRCodes, setShowQRCodes] = useState(false);
   
   
   const handleShowItems = (items: { name: string; quantity: number }[]) => {
@@ -337,6 +339,9 @@ const OrdersPage = () => {
         <button onClick={() => setEditMode(!editMode)}>
           {editMode ? 'Disable Edit' : 'Enable Edit'}
         </button>
+        <button onClick={() => setShowQRCodes(!showQRCodes)}>
+          {showQRCodes ? 'Disable QR' : 'Enable QR'}
+        </button>
         <button onClick={() => setShowShapeModal(true)}>Add Table</button>
       </div>
   
@@ -537,6 +542,12 @@ const OrdersPage = () => {
           Delete
         </button>
       </>
+    ) : showQRCodes ? (
+      <TableQRCode 
+        restaurantId={restaurantId as string}
+        tableId={table.id}
+        tableNumber={table.table_number}
+      />
     ) : (
       <>
         Table {table.table_number} <br />
