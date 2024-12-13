@@ -136,6 +136,17 @@ const OrdersPage = () => {
     };
 
     fetchOrders();
+
+    const orderSubscription = supabase
+      .channel('orders')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+        fetchOrders(); // Re-fetch orders on any change
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(orderSubscription);
+    };
   }, [restaurantId, tables]);
   
 

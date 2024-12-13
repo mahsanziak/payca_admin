@@ -20,7 +20,14 @@
   padding: 0;
   margin: 0;
 }
-
+.dropdown {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  font-size: 1rem;
+}
 .menuItem {
   display: flex;
   justify-content: space-between;
@@ -51,12 +58,12 @@
 }
 
 .button {
-  padding: 8px 15px;
+  padding: 10px 20px;
   background-color: #007bff;
   color: white;
   border: none;
   border-radius: 6px;
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: bold;
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.2s ease;
@@ -181,4 +188,34 @@
 .menuActions {
   display: flex;
   gap: 10px;
+}
+
+.selectedMenuActions {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.iconButton {
+  background: none;
+  border: none;
+  color: #007bff;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: color 0.3s ease, transform 0.2s ease;
+  margin: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.iconButton:hover {
+  color: #0056b3;
+  transform: translateY(-2px);
+}
+
+.iconButton:disabled {
+  color: #cccccc;
+  cursor: not-allowed;
 }
