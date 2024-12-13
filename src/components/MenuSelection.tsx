@@ -19,6 +19,10 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({
   const [showModal, setShowModal] = useState(false);
   const [newMenuName, setNewMenuName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [editMenuId, setEditMenuId] = useState<string | null>(null);
+  const [editMenuName, setEditMenuName] = useState("");
+
+  const router = useRouter();
 
   const toggleMenuEnabled = async (menuId: string) => {
     try {
@@ -49,13 +53,13 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({
         console.error("Restaurant ID not found or invalid.");
         return;
       }
-  
+
       const { error } = await supabase.from("menus").insert({
         name: newMenuName,
         restaurant_id: restaurantId, // Use restaurant_id from the URL
         enabled: false, // Default to disabled
       });
-  
+
       if (error) {
         console.error("Error creating menu:", error);
       } else {
@@ -69,7 +73,47 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({
       setLoading(false);
     }
   };
-  const router = useRouter(); 
+
+  const handleEditMenu = async () => {
+    if (!editMenuName || !editMenuId) return;
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from("menus")
+        .update({ name: editMenuName })
+        .eq("id", editMenuId);
+
+      if (error) {
+        console.error("Error editing menu:", error);
+      } else {
+        refreshMenus();
+        setEditMenuId(null);
+        setEditMenuName("");
+      }
+    } catch (error) {
+      console.error("Error editing menu:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteMenu = async (menuId: string) => {
+    if (menuId === selectedMenuId) {
+      console.error("Cannot delete a selected menu.");
+      return;
+    }
+    try {
+      const { error } = await supabase.from("menus").delete().eq("id", menuId);
+
+      if (error) {
+        console.error("Error deleting menu:", error);
+      } else {
+        refreshMenus();
+      }
+    } catch (error) {
+      console.error("Error deleting menu:", error);
+    }
+  };
 
   return (
     <div className={styles.menuSelection}>
@@ -114,6 +158,37 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({
         </div>
       )}
 
+      {/* Modal for Editing Menu */}
+      {editMenuId && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <h3>Edit Menu</h3>
+            <input
+              type="text"
+              placeholder="Menu Name"
+              value={editMenuName}
+              onChange={(e) => setEditMenuName(e.target.value)}
+              className={styles.modalInput}
+            />
+            <div className={styles.modalActions}>
+              <button
+                className={styles.saveButton}
+                onClick={handleEditMenu}
+                disabled={loading}
+              >
+                {loading ? "Saving..." : "Save"}
+              </button>
+              <button
+                className={styles.cancelButton}
+                onClick={() => setEditMenuId(null)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <h2 className={styles.title}>Select a Menu</h2>
       <ul className={styles.menuList}>
         {menus.map((menu) => (
@@ -134,12 +209,30 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({
                 {menu.name}
               </label>
             </div>
-            <button
-              onClick={() => setSelectedMenuId(menu.id)}
-              className={styles.button}
-            >
-              {selectedMenuId === menu.id ? "Viewing" : "View Details"}
-            </button>
+            <div className={styles.menuActions}>
+              <button
+                onClick={() => setSelectedMenuId(menu.id)}
+                className={styles.button}
+              >
+                {selectedMenuId === menu.id ? "Viewing" : "View Details"}
+              </button>
+              <button
+                onClick={() => {
+                  setEditMenuId(menu.id);
+                  setEditMenuName(menu.name);
+                }}
+                className={`${styles.button} ${styles.editButton}`}
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => handleDeleteMenu(menu.id)}
+                className={`${styles.button} ${styles.deleteButton}`}
+                disabled={menu.id === selectedMenuId}
+              >
+                Delete
+              </button>
+            </div>
           </li>
         ))}
       </ul>

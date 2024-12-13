@@ -185,10 +185,10 @@ const Dashboard = () => {
                 )}
                 <i className="fas fa-dollar-sign text-2xl"></i>
                 <span>
-                  {key === 'revenue' && `Revenue: CA$${revenue.toFixed(2)}`}
-                  {key === 'ordersCount' && `Orders: ${ordersCount}`}
-                  {key === 'averageOrderSize' && `Avg Order: CA$${averageOrderSize.toFixed(2)}`}
-                  {key === 'tip' && `Tip: CA$${tip.toFixed(2)}`}
+                  {key === 'revenue' && `Revenue: CA$${pricingTier === 'Basic' ? '0.00' : revenue.toFixed(2)}`}
+                  {key === 'ordersCount' && `Orders: ${pricingTier === 'Basic' ? '0' : ordersCount}`}
+                  {key === 'averageOrderSize' && `Avg Order: CA$${pricingTier === 'Basic' ? '0.00' : averageOrderSize.toFixed(2)}`}
+                  {key === 'tip' && `Tip: CA$${pricingTier === 'Basic' ? '0.00' : tip.toFixed(2)}`}
                 </span>
               </div>
             ))}
@@ -201,9 +201,6 @@ const Dashboard = () => {
           }`}
         >
           <h2 className="text-2xl font-semibold mb-4">Recent Orders</h2>
-          {pricingTier === 'Basic' && (
-            <i className="fas fa-lock text-gray-500 text-2xl absolute top-8 right-8"></i>
-          )}
           <table className="orders-table w-full bg-white rounded shadow mx-auto">
             <thead>
               <tr className="bg-gray-100">
