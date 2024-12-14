@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../../utils/supabaseClient'; // Import your Supabase client
 import Draggable from 'react-draggable';
 import _ from 'lodash';
-import { ResizableBox } from 'react-resizable'; // Import ResizableBox
 import { DraggableEvent, DraggableData } from "react-draggable"; // Import types for event and position
 import TableQRCode from '../../../components/TableQRCode';
 
@@ -44,6 +43,12 @@ const OrdersPage = () => {
     { name: string; quantity: number }[] | null
   >(null);
   const [showQRCodes, setShowQRCodes] = useState(false);
+  const [rowsToShow, setRowsToShow] = useState(5); // Default to 5 rows
+
+  // Calculate the height based on the number of rows selected
+  const rowHeight = 40; // Example height for each row (adjust as needed)
+  const headerHeight = 50; // Example height for the header (adjust as needed)
+  const tableHeight = headerHeight + (rowHeight * rowsToShow); // Total height of the table
   
   
   const handleShowItems = (items: { name: string; quantity: number }[]) => {
@@ -354,6 +359,15 @@ const OrdersPage = () => {
           {showQRCodes ? 'Disable QR' : 'Enable QR'}
         </button>
         <button onClick={() => setShowShapeModal(true)}>Add Table</button>
+        <label>
+          Number of rows in view:
+          <select value={rowsToShow} onChange={(e) => setRowsToShow(Number(e.target.value))}>
+            <option value={1}>1</option>
+            <option value={3}>3</option>
+            <option value={5}>5</option>
+            <option value={7}>7</option>
+          </select>
+        </label>
       </div>
   
       {showShapeModal && (
@@ -379,104 +393,83 @@ const OrdersPage = () => {
         </div>
       )}
   
-  <ResizableBox
-        width={Infinity}
-        height={300}
-        axis="y"
-        resizeHandles={["s"]}
-        minConstraints={[Infinity, 200]}
-        maxConstraints={[Infinity, 600]}
-        className={styles.resizableBox}
-      >
-        <div className={styles.ordersTableContainer}>
-          <table className={styles.ordersTable}>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Status</th>
-                <th>Table</th>
-                <th>Time</th>
-                <th>Total</th>
-                <th>Waiter</th>
-              </tr>
-            </thead>
-          </table>
-          <div className={styles.scrollableTableBody}>
-            <table className={styles.ordersTable}>
-              <tbody>
-                {orders.length > 0 ? (
-                  orders
-                    .sort((a, b) => {
-                      if (a.status === "ready" && b.status !== "ready")
-                        return 1;
-                      if (a.status !== "ready" && b.status === "ready")
-                        return -1;
-                      return b.order_number - a.order_number;
-                    })
-                    .filter((order) => order.status !== "archive")
-                    .filter((order) =>
-                      showPastOrders
-                        ? order.status === "paid"
-                        : order.status === "pending" ||
-                          order.status === "ready"
-                    )
-                    .map((order) => (
-                      <tr key={order.id}>
-                        <td
-                          className={styles.clickableId}
-                          onClick={() =>
-                            handleShowItems(order.items || [])
-                          }
-                        >
-                          {order.order_number}
-                        </td>
-                        <td>
-                          <select
-                            value={order.status}
-                            onChange={async (e) => {
-                              const newStatus = e.target.value;
-                              const { error } = await supabase
-                                .from("orders")
-                                .update({ status: newStatus })
-                                .eq("id", order.id);
+  <div className={styles.ordersTableContainer}>
+    <table className={styles.ordersTable}>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Status</th>
+          <th>Table</th>
+          <th>Time</th>
+          <th>Total</th>
+          <th>Waiter</th>
+        </tr>
+      </thead>
+    </table>
+    <div className={styles.scrollableTableBody} style={{ maxHeight: `${tableHeight}px`, overflowY: 'auto' }}>
+      <table className={styles.ordersTable}>
+        <tbody>
+          {orders.length > 0 ? (
+            orders
+              .sort((a, b) => {
+                if (a.status === "ready" && b.status !== "ready") return 1;
+                if (a.status !== "ready" && b.status === "ready") return -1;
+                return b.order_number - a.order_number;
+              })
+              .filter((order) => order.status !== "archive")
+              .filter((order) =>
+                showPastOrders
+                  ? order.status === "paid"
+                  : order.status === "pending" || order.status === "ready"
+              )
+              .map((order) => (
+                <tr key={order.id}>
+                  <td className={styles.clickableId} onClick={() => handleShowItems(order.items || [])}>
+                    {order.order_number}
+                  </td>
+                  <td>
+                    <select
+                      value={order.status}
+                      onChange={async (e) => {
+                        const newStatus = e.target.value;
+                        const { error } = await supabase
+                          .from("orders")
+                          .update({ status: newStatus })
+                          .eq("id", order.id);
 
-                              if (!error) {
-                                setOrders((prevOrders) =>
-                                  prevOrders.map((o) =>
-                                    o.id === order.id
-                                      ? { ...o, status: newStatus }
-                                      : o
-                                  )
-                                );
-                              }
-                            }}
-                            className={styles.statusDropdown}
-                          >
-                            <option value="pending">Pending</option>
-                            <option value="ready">Ready</option>
-                            <option value="paid">Paid</option>
-                            <option value="archive">Archive</option>
-                          </select>
-                        </td>
-                        <td>{order.table}</td>
-                        <td>{order.time}</td>
-                        <td>${order.total.toFixed(2)}</td>
-                        <td>{order.waiterName || ""}</td>
-                      </tr>
-                    ))
-                ) : (
-                  <tr>
-                    <td colSpan={6} className={styles.noData}>
-                      <i className="fas fa-database"></i> No data available
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <div className={styles.resizeHandle} />
-      </ResizableBox>
+                        if (!error) {
+                          setOrders((prevOrders) =>
+                            prevOrders.map((o) =>
+                              o.id === order.id ? { ...o, status: newStatus } : o
+                            )
+                          );
+                        }
+                      }}
+                      className={styles.statusDropdown}
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="ready">Ready</option>
+                      <option value="paid">Paid</option>
+                      <option value="archive">Archive</option>
+                    </select>
+                  </td>
+                  <td>{order.table}</td>
+                  <td>{order.time}</td>
+                  <td>${order.total.toFixed(2)}</td>
+                  <td>{order.waiterName || ""}</td>
+                </tr>
+              ))
+          ) : (
+            <tr>
+              <td colSpan={6} className={styles.noData}>
+                <i className="fas fa-database"></i> No data available
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  </div>
 
 
 {selectedOrderItems && (
