@@ -25,7 +25,6 @@ const Register = () => {
     }
 
     try {
-      // First, create the restaurant record
       const { data: restaurantData, error: restaurantError } = await supabase
         .from('restaurants')
         .insert({
@@ -38,7 +37,6 @@ const Register = () => {
 
       if (restaurantError) throw restaurantError;
 
-      // Then sign up the user with metadata including the restaurant ID
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -54,7 +52,6 @@ const Register = () => {
 
       if (authError) throw authError;
 
-      // Show success message and redirect
       alert('Please check your email to verify your account. After verification, you can log in.');
       router.push('/login');
 
@@ -67,66 +64,66 @@ const Register = () => {
 
   return (
     <div className={styles.container}>
-      <form onSubmit={handleEmailSignup} className={`${styles.form} max-w-md mx-auto p-6`}>
-        <h2 className="text-2xl mb-4 text-center">Payca Registration</h2>
-        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+      <form onSubmit={handleEmailSignup} className={styles.form}>
+        <h2 className={styles.title}>Register to Payca</h2>
+        {error && <p className={styles.error}>{error}</p>}
         
-        <div className="mb-4">
-          <label htmlFor="restaurantName" className="block mb-2">Restaurant Name</label>
+        <div className={styles.inputGroup}>
+          <label htmlFor="restaurantName" className={styles.label}>Restaurant Name</label>
           <input
             type="text"
             id="restaurantName"
             value={restaurantName}
             onChange={(e) => setRestaurantName(e.target.value)}
-            className="border rounded w-full p-3"
+            className={styles.input}
             required
           />
         </div>
 
-        <div className="mb-4">
-          <label htmlFor="restaurantAddress" className="block mb-2">Restaurant Address</label>
+        <div className={styles.inputGroup}>
+          <label htmlFor="restaurantAddress" className={styles.label}>Restaurant Address</label>
           <input
             type="text"
             id="restaurantAddress"
             value={restaurantAddress}
             onChange={(e) => setRestaurantAddress(e.target.value)}
-            className="border rounded w-full p-3"
+            className={styles.input}
             required
           />
         </div>
 
-        <div className="mb-4">
-          <label htmlFor="email" className="block mb-2">Email</label>
+        <div className={styles.inputGroup}>
+          <label htmlFor="email" className={styles.label}>Email</label>
           <input
             type="email"
             id="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="border rounded w-full p-3"
+            className={styles.input}
             required
           />
         </div>
 
-        <div className="mb-4">
-          <label htmlFor="password" className="block mb-2">Password</label>
+        <div className={styles.inputGroup}>
+          <label htmlFor="password" className={styles.label}>Password</label>
           <input
             type="password"
             id="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="border rounded w-full p-3"
+            className={styles.input}
             required
           />
         </div>
 
-        <div className="mb-4">
-          <label htmlFor="confirmPassword" className="block mb-2">Confirm Password</label>
+        <div className={styles.inputGroup}>
+          <label htmlFor="confirmPassword" className={styles.label}>Confirm Password</label>
           <input
             type="password"
             id="confirmPassword"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="border rounded w-full p-3"
+            className={styles.input}
             required
           />
         </div>
@@ -139,8 +136,8 @@ const Register = () => {
           {loading ? 'Creating Account...' : 'Register'}
         </button>
 
-        <div className="mt-4 text-center">
-          <p className="text-gray-600">Already have an account?</p>
+        <div className={styles.linkContainer}>
+          <p className={styles.text}>Already have an account?</p>
           <button
             type="button"
             onClick={() => router.push('/login')}

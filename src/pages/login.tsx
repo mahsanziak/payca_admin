@@ -68,29 +68,29 @@ const Login = () => {
   return (
     <div className={styles.container}>
       <form onSubmit={handleEmailLogin} className={styles.form}>
-        <h2 className="text-2xl mb-4 text-center">Payca</h2>
-        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+        <h2 className={styles.title}>Sign in to Payca</h2>
+        {error && <p className={styles.error}>{error}</p>}
         
-        <div className="mb-4">
-          <label htmlFor="email" className="block mb-2">Email</label>
+        <div className={styles.inputGroup}>
+          <label htmlFor="email" className={styles.label}>Email</label>
           <input
             type="email"
             id="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="border rounded w-full p-2"
+            className={styles.input}
             required
           />
         </div>
         
-        <div className="mb-4">
-          <label htmlFor="password" className="block mb-2">Password</label>
+        <div className={styles.inputGroup}>
+          <label htmlFor="password" className={styles.label}>Password</label>
           <input
             type="password"
             id="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="border rounded w-full p-2"
+            className={styles.input}
             required
           />
         </div>
@@ -103,19 +103,19 @@ const Login = () => {
           {loading ? 'Logging in...' : 'Login'}
         </button>
 
-        <div className="mt-4 text-center">
+        <div className={styles.linkContainer}>
           <button 
             type="button"
             onClick={handleForgotPassword} 
-            className={`${styles.link} text-blue-500`}
+            className={styles.link}
             disabled={isResetting}
           >
             {isResetting ? 'Sending reset email...' : 'Forgot Password?'}
           </button>
         </div>
 
-        <div className="mt-4 text-center">
-          <p className="text-gray-600">Don&apos;t have an account?</p>
+        <div className={styles.linkContainer}>
+          <p className={styles.text}>Don&apos;t have an account?</p>
           <button 
             type="button"
             onClick={() => router.push('/register')} 
