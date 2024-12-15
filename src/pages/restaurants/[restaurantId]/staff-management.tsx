@@ -124,25 +124,25 @@ const StaffManagement = () => {
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Staff Management</h1>
 
-      <form onSubmit={handleAddStaff} className="mb-4 flex items-center space-x-4">
-        <div>
+      <form onSubmit={handleAddStaff} className="mb-4 flex flex-col md:flex-row items-center space-x-0 md:space-x-4">
+        <div className="flex-1">
           <label className="block mb-2">Name:</label>
           <input
             type="text"
             name="name"
             value={newStaff.name}
             onChange={handleAddStaffChange}
-            className="border px-4 py-2"
+            className="border px-4 py-2 w-full"
             required
           />
         </div>
-        <div>
+        <div className="flex-1">
           <label className="block mb-2">Role:</label>
           <select
             name="role"
             value={newStaff.role}
             onChange={handleAddStaffChange}
-            className="border px-4 py-2"
+            className="border px-4 py-2 w-full"
             required
           >
             <option value="">Select a Role</option>
@@ -152,13 +152,13 @@ const StaffManagement = () => {
             <option value="manager">Manager</option>
           </select>
         </div>
-        <div>
+        <div className="flex-1">
           <label className="block mb-2">Assigned Table:</label>
           <select
             name="table_id"
             value={newStaff.table_id}
             onChange={handleAddStaffChange}
-            className="border px-4 py-2"
+            className="border px-4 py-2 w-full"
           >
             <option value="">Select a Table</option>
             {tables.map((table) => (
@@ -170,7 +170,7 @@ const StaffManagement = () => {
         </div>
         <button
           type="submit"
-          className="bg-blue-500 text-white px-4 py-2"
+          className="bg-blue-500 text-white px-4 py-2 mt-4 md:mt-0"
         >
           Add Staff
         </button>
@@ -182,87 +182,89 @@ const StaffManagement = () => {
         </div>
       )}
 
-      <table className="min-w-full bg-white">
-        <thead>
-          <tr>
-            <th className="py-2">Name</th>
-            <th className="py-2">Role</th>
-            <th className="py-2">Assigned Table</th>
-            <th className="py-2">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {staff.map((staffMember) => (
-            staffMember && staffMember.id ? (
-              <tr key={staffMember.id}>
-                <td className="border px-4 py-2">
-                  {editingStaffId === staffMember.id ? (
-                    <input
-                      type="text"
-                      value={editingStaff.name}
-                      onChange={(e) => handleInputChange(e, 'name')}
-                      className="border px-2 py-1"
+      <div className="overflow-x-auto">
+        <table className="min-w-full bg-white">
+          <thead>
+            <tr>
+              <th className="py-2">Name</th>
+              <th className="py-2">Role</th>
+              <th className="py-2">Assigned Table</th>
+              <th className="py-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {staff.map((staffMember) => (
+              staffMember && staffMember.id ? (
+                <tr key={staffMember.id}>
+                  <td className="border px-4 py-2">
+                    {editingStaffId === staffMember.id ? (
+                      <input
+                        type="text"
+                        value={editingStaff.name}
+                        onChange={(e) => handleInputChange(e, 'name')}
+                        className="border px-2 py-1 w-full"
+                      />
+                    ) : (
+                      staffMember.name
+                    )}
+                  </td>
+                  <td className="border px-4 py-2">
+                    {editingStaffId === staffMember.id ? (
+                      <select
+                        value={editingStaff.role}
+                        onChange={(e) => handleInputChange(e, 'role')}
+                        className="border px-2 py-1 w-full"
+                      >
+                        <option value="waiter">Waiter</option>
+                        <option value="cashier">Cashier</option>
+                        <option value="chef">Chef</option>
+                        <option value="manager">Manager</option>
+                      </select>
+                    ) : (
+                      staffMember.role
+                    )}
+                  </td>
+                  <td className="border px-4 py-2">
+                    {editingStaffId === staffMember.id ? (
+                      <select
+                        value={editingStaff.table_id}
+                        onChange={(e) => handleInputChange(e, 'table_id')}
+                        className="border px-2 py-1 w-full"
+                      >
+                        <option value="">Select a Table</option>
+                        {tables.map((table) => (
+                          <option key={table.id} value={table.id}>
+                            Table {table.table_number}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      staffMember.table_id ? tables.find((table) => table.id === staffMember.table_id)?.table_number : 'Not Assigned'
+                    )}
+                  </td>
+                  <td className="border px-4 py-2 flex space-x-2">
+                    {editingStaffId === staffMember.id ? (
+                      <FaSave
+                        onClick={() => handleSaveStaff(staffMember.id)}
+                        className="text-green-500 cursor-pointer"
+                      />
+                    ) : (
+                      <FaEdit
+                        onClick={() => handleEditStaff(staffMember)}
+                        className="text-blue-500 cursor-pointer"
+                      />
+                    )}
+                    <FaTrash
+                      onClick={() => handleDeleteStaff(staffMember.id)}
+                      className="text-red-500 cursor-pointer"
                     />
-                  ) : (
-                    staffMember.name
-                  )}
-                </td>
-                <td className="border px-4 py-2">
-                  {editingStaffId === staffMember.id ? (
-                    <select
-                      value={editingStaff.role}
-                      onChange={(e) => handleInputChange(e, 'role')}
-                      className="border px-2 py-1"
-                    >
-                      <option value="waiter">Waiter</option>
-                      <option value="cashier">Cashier</option>
-                      <option value="chef">Chef</option>
-                      <option value="manager">Manager</option>
-                    </select>
-                  ) : (
-                    staffMember.role
-                  )}
-                </td>
-                <td className="border px-4 py-2">
-                  {editingStaffId === staffMember.id ? (
-                    <select
-                      value={editingStaff.table_id}
-                      onChange={(e) => handleInputChange(e, 'table_id')}
-                      className="border px-2 py-1"
-                    >
-                      <option value="">Select a Table</option>
-                      {tables.map((table) => (
-                        <option key={table.id} value={table.id}>
-                          Table {table.table_number}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    staffMember.table_id ? tables.find((table) => table.id === staffMember.table_id)?.table_number : 'Not Assigned'
-                  )}
-                </td>
-                <td className="border px-4 py-2 flex space-x-2">
-                  {editingStaffId === staffMember.id ? (
-                    <FaSave
-                      onClick={() => handleSaveStaff(staffMember.id)}
-                      className="text-green-500 cursor-pointer"
-                    />
-                  ) : (
-                    <FaEdit
-                      onClick={() => handleEditStaff(staffMember)}
-                      className="text-blue-500 cursor-pointer"
-                    />
-                  )}
-                  <FaTrash
-                    onClick={() => handleDeleteStaff(staffMember.id)}
-                    className="text-red-500 cursor-pointer"
-                  />
-                </td>
-              </tr>
-            ) : null // Safeguard rendering if staffMember or id is missing
-          ))}
-        </tbody>
-      </table>
+                  </td>
+                </tr>
+              ) : null // Safeguard rendering if staffMember or id is missing
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

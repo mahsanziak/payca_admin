@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { supabase } from "../utils/supabaseClient";
 import styles from "./MenuSelection.module.css";
 import { useRouter } from "next/router";
-import { FaEdit, FaTrash } from "react-icons/fa";
 
 interface MenuSelectionProps {
   menus: any[];
@@ -20,10 +19,6 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({
   const [showModal, setShowModal] = useState(false);
   const [newMenuName, setNewMenuName] = useState("");
   const [loading, setLoading] = useState(false);
-  const [editMenuId, setEditMenuId] = useState<string | null>(null);
-  const [editMenuName, setEditMenuName] = useState("");
-
-  const router = useRouter();
 
   const toggleMenuEnabled = async (menuId: string) => {
     try {
@@ -54,13 +49,13 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({
         console.error("Restaurant ID not found or invalid.");
         return;
       }
-
+  
       const { error } = await supabase.from("menus").insert({
         name: newMenuName,
         restaurant_id: restaurantId, // Use restaurant_id from the URL
         enabled: false, // Default to disabled
       });
-
+  
       if (error) {
         console.error("Error creating menu:", error);
       } else {
@@ -74,47 +69,7 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({
       setLoading(false);
     }
   };
-
-  const handleEditMenu = async () => {
-    if (!editMenuName || !editMenuId) return;
-    setLoading(true);
-    try {
-      const { error } = await supabase
-        .from("menus")
-        .update({ name: editMenuName })
-        .eq("id", editMenuId);
-
-      if (error) {
-        console.error("Error editing menu:", error);
-      } else {
-        refreshMenus();
-        setEditMenuId(null);
-        setEditMenuName("");
-      }
-    } catch (error) {
-      console.error("Error editing menu:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteMenu = async (menuId: string) => {
-    if (menuId === selectedMenuId) {
-      console.error("Cannot delete a selected menu.");
-      return;
-    }
-    try {
-      const { error } = await supabase.from("menus").delete().eq("id", menuId);
-
-      if (error) {
-        console.error("Error deleting menu:", error);
-      } else {
-        refreshMenus();
-      }
-    } catch (error) {
-      console.error("Error deleting menu:", error);
-    }
-  };
+  const router = useRouter(); 
 
   return (
     <div className={styles.menuSelection}>
@@ -143,48 +98,6 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({
         ))}
       </select>
 
-      {/* Display Selected Menu Actions */}
-      {selectedMenuId && (
-        <div className={styles.selectedMenuActions}>
-          <button
-            onClick={() => {
-              const selectedMenu = menus.find((menu) => menu.id === selectedMenuId);
-              if (selectedMenu) {
-                setEditMenuId(selectedMenu.id);
-                setEditMenuName(selectedMenu.name);
-              }
-            }}
-            className={styles.iconButton}
-          >
-            <FaEdit />
-          </button>
-          <button
-            onClick={() => handleDeleteMenu(selectedMenuId)}
-            className={styles.iconButton}
-            disabled={!selectedMenuId}
-          >
-            <FaTrash />
-          </button>
-        </div>
-      )}
-
-      {/* List of Menus with Enable/Disable Checkbox */}
-      <ul className={styles.menuList}>
-        {menus.map((menu) => (
-          <li key={menu.id} className={styles.menuItem}>
-            <label className={styles.checkboxLabel}>
-              <input
-                type="checkbox"
-                checked={menu.enabled}
-                onChange={() => toggleMenuEnabled(menu.id)}
-                className={styles.checkbox}
-              />
-              {menu.name}
-            </label>
-          </li>
-        ))}
-      </ul>
-
       {/* Modal for Creating New Menu */}
       {showModal && (
         <div className={styles.modalOverlay}>
@@ -208,37 +121,6 @@ const MenuSelection: React.FC<MenuSelectionProps> = ({
               <button
                 className={styles.cancelButton}
                 onClick={() => setShowModal(false)}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal for Editing Menu */}
-      {editMenuId && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modalContent}>
-            <h3>Edit Menu</h3>
-            <input
-              type="text"
-              placeholder="Menu Name"
-              value={editMenuName}
-              onChange={(e) => setEditMenuName(e.target.value)}
-              className={styles.modalInput}
-            />
-            <div className={styles.modalActions}>
-              <button
-                className={styles.saveButton}
-                onClick={handleEditMenu}
-                disabled={loading}
-              >
-                {loading ? "Saving..." : "Save"}
-              </button>
-              <button
-                className={styles.cancelButton}
-                onClick={() => setEditMenuId(null)}
               >
                 Cancel
               </button>

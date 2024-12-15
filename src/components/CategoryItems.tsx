@@ -30,7 +30,6 @@ const CategoryItems: React.FC<CategoryItemsProps> = ({
     image_url: "",
   });
   const [newImage, setNewImage] = useState<string | null>(null); // Store Base64 string for the new item
-  const [fileInputKey, setFileInputKey] = useState<number>(0);
 
   const convertToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -54,8 +53,7 @@ const CategoryItems: React.FC<CategoryItemsProps> = ({
     if (newItem.name.trim() && newItem.price) {
       addItem({ ...newItem, category_id: categoryId, image_url: newImage });
       setNewItem({ name: "", description: "", price: "", image_url: "" });
-      setNewImage(null);
-      setFileInputKey(prev => prev + 1);
+      setNewImage(null); // Reset image
     }
   };
 
@@ -153,8 +151,7 @@ const CategoryItems: React.FC<CategoryItemsProps> = ({
           </li>
         ))}
       </ul>
-      <div className={styles.addItem}>
-        <h4>Add New Item</h4>
+      <div className={styles.addItemRow}>
         <input
           type="text"
           placeholder="Item name"
@@ -177,7 +174,6 @@ const CategoryItems: React.FC<CategoryItemsProps> = ({
           className={styles.input}
         />
         <input
-          key={fileInputKey}
           type="file"
           accept="image/*"
           onChange={(e) => {

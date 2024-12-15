@@ -1,63 +1,62 @@
 .menusPage {
-    margin: 20px;
-    padding: 20px;
-    background-color: #f9fafb;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
-  
-  .pageTitle {
-    font-size: 28px;
-    font-weight: bold;
-    margin-bottom: 20px;
-    color: #1f2937;
-    text-align: center;
-  }
-  
-  .menuList {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  
-  .menuItem {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 15px;
-    margin-bottom: 10px;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    background-color: #ffffff;
-    transition: box-shadow 0.2s ease-in-out;
-  }
-  
-  .menuItem:hover {
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  }
-  
-  .menuCheckbox {
-    margin-right: 10px;
-  }
-  
-  .menuName {
-    font-weight: 500;
-    color: #374151;
-  }
-  
-  .viewDetailsButton {
-    padding: 8px 12px;
-    font-size: 14px;
-    font-weight: 600;
-    color: #ffffff;
-    background-color: #1d4ed8;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.2s ease-in-out;
-  }
-  
-  .viewDetailsButton:hover {
-    background-color: #2563eb;
-  }
-  
+  margin: 20px;
+  padding: 20px;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.pageTitle {
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  color: #1f2937;
+  text-align: center;
+}
+
+.menuList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 15px;
+  margin-bottom: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background-color: #ffffff;
+  transition: box-shadow 0.2s ease-in-out;
+}
+
+.menuItem:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.menuCheckbox {
+  margin-right: 10px;
+}
+
+.menuName {
+  font-weight: 500;
+  color: #374151;
+}
+
+.viewDetailsButton {
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: #1d4ed8;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.viewDetailsButton:hover {
+  background-color: #2563eb;
+}

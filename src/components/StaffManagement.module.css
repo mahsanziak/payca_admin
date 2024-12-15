@@ -1,0 +1,39 @@
+.container {
+  font-family: 'Nunito', 'Roboto', sans-serif;
+  min-height: 100vh;
+  padding: 2rem;
+  background-color: #f9fafb; /* Light background color for the entire page */
+}
+
+.title {
+  text-align: center;
+  font-size: 2rem;
+  margin-bottom: 2rem;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 1rem;
+  border: 1px solid #e5e7eb; /* Light gray border */
+}
+
+.table th {
+  background-color: #f3f4f6; /* Light gray background */
+}
+
+/* Media Queries for Responsiveness */
+@media (max-width: 768px) {
+  .title {
+    font-size: 1.5rem; /* Smaller title on mobile */
+  }
+
+  .table th,
+  .table td {
+    font-size: 0.875rem; /* Smaller font size for table cells */
+  }
+} 

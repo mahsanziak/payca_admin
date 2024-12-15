@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../utils/supabaseClient';
 import { useRouter } from 'next/router';
+import styles from '../../../components/dashboard.module.css';
 
 type Order = {
   id: string;
@@ -161,8 +162,8 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="flex">
-      <div className="main-content flex-1 p-6">
+    <div className="flex overflow-x-auto">
+      <div className={`${styles.container} main-content flex-1 p-6`}>
         <div className="dashboard-header mb-8 text-center">
           <h2 className="text-6xl font-bold animate-pulse">{`Welcome to ${restaurantName}`}</h2>
           <p className="text-xl text-gray-500 mt-2">
@@ -170,9 +171,9 @@ const Dashboard = () => {
           </p>
         </div>
 
-        <div className="today-stats mb-8 text-center">
+        <div className={`${styles.gridContainer} today-stats mb-8 text-center`}>
           <h2 className="text-2xl font-semibold mb-4">Today</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 justify-center">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 justify-center">
             {['revenue', 'ordersCount', 'averageOrderSize', 'tip'].map((key, index) => (
               <div
                 key={index}
@@ -195,19 +196,13 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div
-          className={`recent-orders text-center ${
-            pricingTier === 'Basic' ? 'opacity-50 relative' : ''
-          }`}
-        >
+        <div className={`recent-orders text-center ${pricingTier === 'Basic' ? 'opacity-50 relative' : ''}`}>
           <h2 className="text-2xl font-semibold mb-4">Recent Orders</h2>
           <table className="orders-table w-full bg-white rounded shadow mx-auto">
             <thead>
               <tr className="bg-gray-100">
                 <th className="p-2">Order Time</th>
                 <th className="p-2">Status</th>
-                <th className="p-2">Table</th>
-                <th className="p-2">Waiter</th>
                 <th className="p-2">Total</th>
               </tr>
             </thead>
@@ -217,14 +212,12 @@ const Dashboard = () => {
                   <tr key={order.id}>
                     <td className="p-2">{formatOrderTime(order.created_at)}</td>
                     <td className="p-2">{order.status}</td>
-                    <td className="p-2">{tablesMap[order.table_id] || 'Unknown'}</td>
-                    <td className="p-2">{waitersMap[order.user_id] || ''}</td>
                     <td className="p-2">CA${order.total_price.toFixed(2)}</td>
                   </tr>
                 ))
               ) : (
                 <tr className="no-data">
-                  <td colSpan={5} className="text-center p-4">
+                  <td colSpan={3} className="text-center p-4">
                     <i className="fas fa-database"></i> No data available
                   </td>
                 </tr>
