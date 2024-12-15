@@ -8,6 +8,16 @@
     margin-bottom: 2rem;
   }
   
+  .loadingMessage {
+    text-align: center;
+    font-size: 1.2rem;
+    margin: 1rem 0;
+  }
+  
+  .scrollableTableContainer {
+    overflow-x: auto;
+  }
+  
   .table {
     width: 100%;
     border-collapse: collapse;
@@ -39,5 +49,22 @@
     color: #ccc;
     font-size: 2rem;
     margin-right: 0.5rem;
+  }
+  
+  /* Media Queries for Responsiveness */
+  @media (max-width: 768px) {
+    .title {
+      font-size: 1.8rem;
+    }
+    
+    .table th,
+    .table td {
+      font-size: 0.875rem;
+      padding: 0.5rem;
+    }
+    
+    .loadingMessage {
+      font-size: 1rem;
+    }
   }
   

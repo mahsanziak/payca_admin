@@ -38,28 +38,6 @@
   flex-grow: 1; /* Push the text to take up the available space */
 }
 
-.addItemRow {
-  display: flex;
-  align-items: center; /* Center items vertically */
-  margin-top: 10px; /* Space above the row */
-}
-.input {
-  margin: 5px; /* Space between inputs */
-  padding: 8px;
-  width: 100%; /* Adjust width as needed */
-  max-width: 150px; /* Limit width for better layout */
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-.button {
-  margin-left: 5px; /* Space between inputs and button */
-  padding: 8px 12px;
-  background-color: #4caf50; /* Green background */
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
 .itemDetails button {
   margin-left: 10px;
 }
@@ -81,4 +59,29 @@
 }
 .iconContainer .MuiIconButton-root {
   padding: 5px;
+}
+
+.addItemRow {
+  display: flex;
+  align-items: center; /* Center items vertically */
+  margin-top: 10px; /* Space above the row */
+}
+
+.input {
+  margin: 5px; /* Space between inputs */
+  padding: 8px;
+  width: 100%; /* Adjust width as needed */
+  max-width: 150px; /* Limit width for better layout */
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.button {
+  margin-left: 5px; /* Space between inputs and button */
+  padding: 8px 12px;
+  background-color: #4caf50; /* Green background */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }

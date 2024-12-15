@@ -1,5 +1,12 @@
 /* dashboard.module.css */
 
+.container {
+  font-family: 'Nunito', 'Roboto', sans-serif;
+  min-height: 100vh;
+  padding: 2rem;
+  background-color: #f9fafb; /* Light background color for the entire page */
+}
+
 .main-content {
   margin-left: auto;
   margin-right: auto;
@@ -55,5 +62,12 @@
   }
   50% {
     opacity: 0.5;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .stat-item {
+    flex: 1 1 100%; /* Full width on small screens */
   }
 }

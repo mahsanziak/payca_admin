@@ -53,7 +53,7 @@ const FeedbacksPage = () => {
     <div className={styles.container}>
       <h2 className={styles.title}>Feedbacks</h2>
       {loading ? (
-        <p>Loading feedbacks...</p>
+        <p className={styles.loadingMessage}>Loading feedbacks...</p>
       ) : feedbacks.length === 0 ? (
         <table className={styles.table}>
           <thead>
@@ -74,26 +74,28 @@ const FeedbacksPage = () => {
           </tbody>
         </table>
       ) : (
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>Rating</th>
-              <th>Date</th>
-              <th>Time</th>
-              <th>Comments</th>
-            </tr>
-          </thead>
-          <tbody>
-            {feedbacks.map((feedback) => (
-              <tr key={feedback.id}>
-                <td>{feedback.rating}</td>
-                <td>{formatDate(feedback.created_at)}</td>
-                <td>{new Date(feedback.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
-                <td>{feedback.feedback_text}</td>
+        <div className={styles.scrollableTableContainer}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Rating</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Comments</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {feedbacks.map((feedback) => (
+                <tr key={feedback.id}>
+                  <td>{feedback.rating}</td>
+                  <td>{formatDate(feedback.created_at)}</td>
+                  <td>{new Date(feedback.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+                  <td>{feedback.feedback_text}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
